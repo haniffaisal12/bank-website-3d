@@ -6,6 +6,7 @@ import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
 import {ShaderPass} from 'three/addons/postprocessing/ShaderPass.js';
 import {GTAOPass} from 'three/addons/postprocessing/GTAOPass.js';
 import {EXRLoader} from 'three/addons/loaders/EXRLoader.js';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {Sky} from 'three/addons/objects/Sky.js';
 import {Water} from 'three/addons/objects/Water.js';
 import {Reflector} from 'three/addons/objects/Reflector.js';
@@ -50,6 +51,19 @@ function hdri(name){
   tex.mapping=T.EquirectangularReflectionMapping;
   const rt=pmrem.fromEquirectangular(tex);tex.dispose();
   return(envCache[name]=rt.texture);
+}
+
+/* ---------- model glTF dari assets/models (dengan berkas .json opsional untuk metadata) ---------- */
+const modelCache={};
+async function loadModel(name){
+  if(!modelCache[name]){
+    modelCache[name]=(async()=>{
+      const g=await new GLTFLoader().loadAsync(new URL('../assets/models/'+name+'.glb',import.meta.url).href);
+      let meta={};try{meta=await (await fetch(new URL('../assets/models/'+name+'.json',import.meta.url))).json()}catch(e){}
+      return{scene:g.scene,meta};
+    })();
+  }
+  const r=await modelCache[name];return{scene:r.scene.clone(true),meta:r.meta};
 }
 
 /* ---------- tekstur prosedural ---------- */
@@ -176,4 +190,4 @@ const TG=(id,label,states,def)=>({t:'toggle',id,label,states:states||['Off','On'
 const CY=(id,label,states)=>({t:'cycle',id,label,states});
 const AC=(id,label)=>({t:'action',id,label});
 
-export {$,AC,BGU,Box,CY,Cart,Cyl,EXRLoader,EffectComposer,GTAOPass,OutputPass,RBox,Reflector,RenderPass,RoundedBoxGeometry,ST,ShaderPass,Sky,Sph,T,TG,UnrealBloomPass,V,Water,brickHF,camera,canvas,clamp,ctex,dtex,emis,envCache,fbm,floorMat,glow,glowTex,hdri,hex2,leafGeo,leafMat,leafTexture,lerp,loadHdri,makeSky,mesh,noShadow,pbr,perfHF,physM,plankHF,pmrem,reduce,renderer,ridgeHF,rnd,rng,sstep,starField,stdM,sunDir,sunLight,tagSprite,textTex,tileHF,waterNormal,weaveHF,wetFloor,windowTex};
+export {loadModel,GLTFLoader,$,AC,BGU,Box,CY,Cart,Cyl,EXRLoader,EffectComposer,GTAOPass,OutputPass,RBox,Reflector,RenderPass,RoundedBoxGeometry,ST,ShaderPass,Sky,Sph,T,TG,UnrealBloomPass,V,Water,brickHF,camera,canvas,clamp,ctex,dtex,emis,envCache,fbm,floorMat,glow,glowTex,hdri,hex2,leafGeo,leafMat,leafTexture,lerp,loadHdri,makeSky,mesh,noShadow,pbr,perfHF,physM,plankHF,pmrem,reduce,renderer,ridgeHF,rnd,rng,sstep,starField,stdM,sunDir,sunLight,tagSprite,textTex,tileHF,waterNormal,weaveHF,wetFloor,windowTex};

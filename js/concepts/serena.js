@@ -1,5 +1,5 @@
 /* Konsep serena — modul mandiri, dimuat oleh concepts/serena.html */
-import {$,AC,BGU,Box,CY,Cart,Cyl,EXRLoader,EffectComposer,GTAOPass,OutputPass,RBox,Reflector,RenderPass,RoundedBoxGeometry,ST,ShaderPass,Sky,Sph,T,TG,UnrealBloomPass,V,Water,brickHF,camera,canvas,clamp,ctex,dtex,emis,envCache,fbm,floorMat,glow,glowTex,hdri,hex2,leafGeo,leafMat,leafTexture,lerp,loadHdri,makeSky,mesh,noShadow,pbr,perfHF,physM,plankHF,pmrem,reduce,renderer,ridgeHF,rnd,rng,sstep,starField,stdM,sunDir,sunLight,tagSprite,textTex,tileHF,waterNormal,weaveHF,wetFloor,windowTex} from '../core.js';
+import {loadModel,$,AC,BGU,Box,CY,Cart,Cyl,EXRLoader,EffectComposer,GTAOPass,OutputPass,RBox,Reflector,RenderPass,RoundedBoxGeometry,ST,ShaderPass,Sky,Sph,T,TG,UnrealBloomPass,V,Water,brickHF,camera,canvas,clamp,ctex,dtex,emis,envCache,fbm,floorMat,glow,glowTex,hdri,hex2,leafGeo,leafMat,leafTexture,lerp,loadHdri,makeSky,mesh,noShadow,pbr,perfHF,physM,plankHF,pmrem,reduce,renderer,ridgeHF,rnd,rng,sstep,starField,stdM,sunDir,sunLight,tagSprite,textTex,tileHF,waterNormal,weaveHF,wetFloor,windowTex} from '../core.js';
 /* ==========================================================
    KONSEP 3 — SERENA : bird-eye pulau -> kamar, siang/malam
    ========================================================== */
@@ -75,6 +75,15 @@ function buildSerena(ui){
   mesh(new T.PlaneGeometry(2.4,1.5),stdM(0xffffff,{map:ctex(art),roughness:.7}),0,2.1,3.82,V0).rotation.y=Math.PI;Box(2.55,1.65,.05,woodD,0,2.1,3.85,V0);
   [-2,2].forEach(s=>{const cg=new T.PlaneGeometry(2,3.2,30,1);const cp=cg.attributes.position;for(let i=0;i<cp.count;i++)cp.setZ(i,Math.sin(cp.getX(i)*9)*.09);cg.computeVertexNormals();const cur=new T.Mesh(cg,new T.MeshStandardMaterial({map:linen.map,normalMap:linen.normalMap,roughness:.95,side:T.DoubleSide,transparent:true,opacity:.92}));cur.position.set(s*4.2,1.9,-3.85);cur.castShadow=true;V0.add(cur)});
   const vl=new T.PointLight(0xffcf9a,0,16,2);vl.position.set(0,3,0);V0.add(vl);R(vl,'intensity',0,10);
+  // lampu gantung kuningan (Chandelier 03, hasil studi aset Blender) — dimuat di latar belakang
+  loadModel('chandelier_03').then(({scene:cm,meta})=>{
+    const K=1.5,brass=new T.MeshPhysicalMaterial({color:0xd4a24a,metalness:1,roughness:.26,clearcoat:.15,envMapIntensity:1.3}),
+      glass=new T.MeshPhysicalMaterial({color:0xf2f7ff,metalness:0,roughness:.03,transparent:true,opacity:.3,ior:1.5,envMapIntensity:3,depthWrite:false,side:T.DoubleSide});
+    cm.traverse(o=>{if(!o.isMesh)return;const isGlass=/glass/i.test(o.material.name);o.material=isGlass?glass:brass;o.castShadow=!isGlass;o.receiveShadow=true});
+    const g=new T.Group();g.add(cm);g.scale.setScalar(K);g.position.set(-1.7,4.3,.3);V0.add(g);const rope=Cyl(.012,.012,2.4,woodD,-1.7,5.5,.3,V0,6);rope.castShadow=false;
+    (meta.tips||[]).forEach(p=>{const gl=glow(0xffb45c,.34,p[0],p[1],p[2],g,0);R(gl.material,'opacity',0,.95)});
+    const cl=new T.PointLight(0xffb870,0,10,2);cl.position.set(0,-.5,0);g.add(cl);R(cl,'intensity',0,26);scene.userData.aoDirty=true;
+  }).catch(()=>{});
   // dek
   [-1,1].forEach(s=>Box(.1,.9,5.6,woodD,s*6.2,.7,-6.9,V0));Box(12.6,.1,.1,woodD,0,1.15,-9.8,V0);
   [-2.4,2.4].forEach(x=>{RBox(1.4,.3,3,.08,linen,x,.6,-7.2,V0);Box(1.5,.08,3.2,woodD,x,.4,-7.2,V0)});

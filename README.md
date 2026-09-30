@@ -42,6 +42,7 @@ js/registry.js        daftar konsep (menu, kartu, tautan antar-halaman)
 js/concepts/*.js      satu modul per konsep: adegan, slide, dan aksi tombol
 js/cover.js           adegan portal untuk beranda
 assets/hdri/          HDRI Poly Haven (CC0) untuk pencahayaan
+assets/models/        model glTF (Chandelier_03 di kamar SERENA)
 blender/              skrip Blender (bpy) untuk render dan ekspor aset; lihat blender/README.md
 ```
 

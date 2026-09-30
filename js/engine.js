@@ -24,6 +24,8 @@ function buildComposer(w,h){
 }
 function resizeAll(){if(!renderer)return;const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.fov=w/h<.9?72:55;camera.updateProjectionMatrix();if(!composer)buildComposer(w,h);else composer.setSize(w,h)}
 
+/* objek transparan, sprite, dan partikel dikeluarkan dari pass oklusi ambien supaya tidak menggelapkan sekitarnya */
+function collectAO(scene){const l=[];scene.traverse(o=>{const m=o.material;if(o.isSprite||o.isPoints||o.isLine||(m&&!Array.isArray(m)&&m.transparent&&!m.alphaTest&&!m.alphaMap)||(m&&m.isShaderMaterial))l.push(o)});return l}
 export async function start(concepts,opts){
  opts=opts||{};
 const scroller=$('#scroller');
@@ -92,7 +94,7 @@ function ensure(c){
   if(c.rt&&c.rt.setQ)c.rt.setQ(quality);
   c.pos=c.n>1?new T.CatmullRomCurve3(c.slides.map(s=>V(s.cam[0],s.cam[1],s.cam[2])),false,'catmullrom',.5):null;
   c.lookC=c.n>1?new T.CatmullRomCurve3(c.slides.map(s=>V(s.look[0],s.look[1],s.look[2])),false,'catmullrom',.5):null;
-  if(c.rt&&c.rt.scene&&!c.rt.aoHide){const l=[];c.rt.scene.traverse(o=>{const m=o.material;if(o.isSprite||o.isPoints||o.isLine||(m&&!Array.isArray(m)&&m.transparent&&!m.alphaTest&&!m.alphaMap)||(m&&m.isShaderMaterial))l.push(o)});c.rt.aoHide=l}
+  if(c.rt&&c.rt.scene)c.rt.aoHide=collectAO(c.rt.scene);
   return c.rt;
 }
 /* ---------- kualitas ---------- */
@@ -106,7 +108,7 @@ if(!autoQ||quality!==2)qb.textContent=QP+(autoQ?'Auto':QN[quality]);
 const SMALL=matchMedia('(max-width:820px)').matches||matchMedia('(pointer:coarse)').matches;
 let hideAO=[];if(gtao){const orig=gtao.render.bind(gtao);gtao.render=function(...a){const l=hideAO;l.forEach(o=>{o._v=o.visible;o.visible=false});orig(...a);l.forEach(o=>{o.visible=o._v})}}
 /* ---------- loop ---------- */
-let sp=0,curC=null,curDot=-1,tt=0,last=performance.now(),fT=0.016,fN=0;
+let aoTick=0,sp=0,curC=null,curDot=-1,tt=0,last=performance.now(),fT=0.016,fN=0;
 const iris=$('#iris'),tp=new T.Vector3(),tl=new T.Vector3();
 const cur={exp:1,bl:[.5,.6,.9],vig:.35,grain:.03,tint:[1,1,1],sat:1};
 function frame(now){
@@ -132,7 +134,7 @@ function frame(now){
   cur.vig+=((L.vig==null?.35:L.vig)-cur.vig)*k;cur.grain+=((L.grain==null?.03:L.grain)-cur.grain)*k;cur.sat+=((L.sat||1)-cur.sat)*k;
   renderer.toneMappingExposure=cur.exp;
   if(quality>0&&composer){
-    rpass.scene=rt.scene;if(gtao){gtao.scene=rt.scene;gtao.enabled=quality>=2;hideAO=rt.aoHide||[]}
+    rpass.scene=rt.scene;if(gtao){gtao.scene=rt.scene;gtao.enabled=quality>=2;if(rt.scene.userData.aoDirty||++aoTick%600===0){rt.scene.userData.aoDirty=false;rt.aoHide=collectAO(rt.scene)}hideAO=rt.aoHide||[]}
     bloom.strength=cur.bl[0];bloom.radius=cur.bl[1];bloom.threshold=cur.bl[2];
     const u=grade.uniforms;u.uTime.value=tt%10;u.uVig.value=cur.vig;u.uGrain.value=cur.grain;u.uTint.value.set(cur.tint[0],cur.tint[1],cur.tint[2]);u.uSat.value=cur.sat;
     composer.render(dt);
