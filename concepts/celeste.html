@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>CELESTE · Bank Inspirasi 3D</title>
+<meta name="description" content="E-commerce · Company Profile: Kubah kecil di bawah bulan besar">
+<meta name="theme-color" content="#04060b">
+<meta property="og:title" content="CELESTE · Bank Inspirasi 3D"><meta property="og:description" content="E-commerce · Company Profile: Kubah kecil di bawah bulan besar"><meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../css/site.css">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"}}</script>
+<style>:root{--acc:#b9a6ff}</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div id="nogl"><p>WebGL tidak tersedia di perangkat ini.<br>Teks tetap dapat dibaca, tetapi adegan 3D tidak ditampilkan.</p></div>
+<div id="iris"></div>
+<div id="loader"><div><p>Menyiapkan adegan 3D</p><i></i></div></div>
+<main id="scroller" tabindex="0" aria-label="Slide"></main>
+<header class="hud top">
+  <a class="brand" href="../index.html" aria-label="Beranda">Bank Inspirasi 3D<small>Sinema · Snap-scroll</small></a>
+  <div class="tools">
+    <button class="tb" id="bMenu" aria-expanded="false" aria-controls="menu">Peta konsep</button>
+    <button class="tb" id="bBrief" aria-expanded="false" aria-controls="brief">Catatan</button>
+  </div>
+</header>
+<nav class="hud" id="dots" aria-label="Slide dalam konsep"></nav>
+<aside class="panel" id="menu" aria-label="Peta konsep"></aside>
+<aside class="panel" id="brief" aria-label="Catatan konsep"></aside>
+<noscript><p style="position:fixed;inset:auto 0 0 0;padding:16px;background:#04060b;color:#eef2f7">Halaman ini membutuhkan JavaScript dan WebGL.</p></noscript>
+<script type="module">
+import {start} from '../js/engine.js';
+import {REG} from '../js/registry.js';
+import {loadHdri} from '../js/core.js';
+import {concept} from '../js/concepts/celeste.js';
+await loadHdri(concept.hdris);
+start([concept],{root:'../',all:REG});
+</script>
+</body>
+</html>
