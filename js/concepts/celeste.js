@@ -1,5 +1,5 @@
 /* Konsep celeste — modul mandiri, dimuat oleh concepts/celeste.html */
-import {loadModel,$,AC,BGU,Box,CY,Cart,Cyl,EXRLoader,EffectComposer,GTAOPass,OutputPass,RBox,Reflector,RenderPass,RoundedBoxGeometry,ST,ShaderPass,Sky,Sph,T,TG,UnrealBloomPass,V,Water,brickHF,camera,canvas,clamp,ctex,dtex,emis,envCache,fbm,floorMat,glow,glowTex,hdri,hex2,leafGeo,leafMat,leafTexture,lerp,loadHdri,makeSky,mesh,noShadow,pbr,perfHF,physM,plankHF,pmrem,reduce,renderer,ridgeHF,rnd,rng,sstep,starField,stdM,sunDir,sunLight,tagSprite,textTex,tileHF,waterNormal,weaveHF,wetFloor,windowTex} from '../core.js';
+import {$,AC,BGU,Box,CY,Cart,Cyl,EXRLoader,EffectComposer,GTAOPass,OutputPass,RBox,Reflector,RenderPass,RoundedBoxGeometry,ST,ShaderPass,Sky,Sph,T,TG,UnrealBloomPass,V,Water,brickHF,camera,canvas,clamp,ctex,dtex,emis,envCache,fbm,floorMat,glow,glowTex,hdri,hex2,leafGeo,leafMat,leafTexture,lerp,loadHdri,makeSky,mesh,noShadow,pbr,perfHF,physM,plankHF,pmrem,reduce,renderer,ridgeHF,rnd,rng,sstep,starField,stdM,sunDir,sunLight,tagSprite,textTex,tileHF,waterNormal,weaveHF,wetFloor,windowTex} from '../core.js';
 /* ==========================================================
    KONSEP 6 — CELESTE : observatorium gunung -> kubah & teleskop
    ========================================================== */
@@ -63,27 +63,15 @@ function buildCeleste(ui){
   const rimR=new T.Mesh(new T.CylinderGeometry(6.2,6.2,.35,64,1,true),new T.MeshStandardMaterial({color:0x9aa4b8,metalness:.6,roughness:.5,side:T.DoubleSide}));rimR.position.y=6.05;scene.add(rimR);
   const lamp=new T.PointLight(0xffc890,45,16,2);lamp.position.set(0,5.2,2);scene.add(lamp);
   const redL=new T.PointLight(0xff3a20,8,8,2);redL.position.set(3.5,1.6,-2.5);scene.add(redL);
-  // teleskop: versi prosedural sebagai cadangan, diganti model glTF bila berhasil dimuat
-  const oldScope=new T.Group();scene.add(oldScope);
-  const PX=-1.9,PZ=-1.2;Cyl(.5,.75,2.4,stdM(0x2a2f3a,{metalness:.6,roughness:.35}),PX,1.8,PZ,oldScope,32);
-  const mount=new T.Group();mount.position.set(PX,3.2,PZ);oldScope.add(mount);Sph(.55,stdM(0x3a4152,{metalness:.7,roughness:.35}),0,0,0,mount,32,20);
+  // teleskop
+  const PX=-1.9,PZ=-1.2;Cyl(.5,.75,2.4,stdM(0x2a2f3a,{metalness:.6,roughness:.35}),PX,1.8,PZ,scene,32);
+  const mount=new T.Group();mount.position.set(PX,3.2,PZ);scene.add(mount);Sph(.55,stdM(0x3a4152,{metalness:.7,roughness:.35}),0,0,0,mount,32,20);
   const brushed=pbr({hf:ridgeHF(90),fx:2,fy:60,oct:2,seed:30,c0:0xd8dade,c1:0xf6f7fa,nS:.8,r0:.28,r1:.42,rep:[6,1],metal:.9,w:256});
   const tube=new T.Group();mount.add(tube);Cyl(.5,.55,4.4,brushed,0,2,0,tube,48);Cyl(.62,.62,.34,stdM(0x15181f,{roughness:.55}),0,4.3,0,tube,48);
   mesh(new T.CylinderGeometry(.44,.44,.02,40),new T.MeshPhysicalMaterial({color:0x6a9aff,roughness:.05,metalness:.3,clearcoat:1,transparent:true,opacity:.6,envMapIntensity:2}),0,4.15,0,tube).castShadow=false;
   Cyl(.13,.15,.5,brass,0,-.1,0,tube,20);[0,1].forEach(i=>Cyl(.16,.16,1.3,stdM(0x1a1d26,{metalness:.5,roughness:.4}),.78,1.6,0,tube,20));Sph(.06,new T.MeshBasicMaterial({color:new T.Color(3,.4,.3),toneMapped:false}),.78,2.35,0,tube,8,6);
   Cyl(.5,.5,.1,brass,0,.55,0,tube,32);Cyl(.5,.5,.06,brass,0,3.6,0,tube,32);
   const upv=V(0,1,0),qFrom=new T.Quaternion(),qTo=new T.Quaternion();
-  let gl=null;const aimQ=new T.Quaternion(),qW=new T.Quaternion(),qi=new T.Quaternion(),tmpQ=new T.Quaternion();
-  loadModel('telescope',{meta:true}).then(({scene:tm,meta})=>{
-    const K=3.3/meta.height,g=new T.Group();g.scale.setScalar(K);g.position.set(PX,.64,PZ);g.add(tm);scene.add(g);
-    tm.traverse(o=>{if(!o.isMesh)return;o.castShadow=o.receiveShadow=true;const m=o.material;
-      if(m&&m.name==='Lens'){o.material=new T.MeshPhysicalMaterial({color:0x101a44,metalness:.2,roughness:.03,clearcoat:1,envMapIntensity:2.5})}
-      else if(m&&m.metalness>.5)m.envMapIntensity=1.6});
-    g.updateMatrixWorld(true);const node=tm.getObjectByName(meta.tube.replace(/[.\[\]:\/]/g,''));if(!node)return;
-    oldScope.visible=false;
-    gl={node,restQ:node.quaternion.clone(),axis:V(...meta.axis).normalize(),pq:node.parent.getWorldQuaternion(new T.Quaternion())};
-    scene.userData.aoDirty=true;
-  }).catch(e=>console.warn('teleskop.glb tidak dimuat, memakai versi prosedural:',e&&e.message));
   // isi ruang
   Cyl(1,1,.08,woodD,2.6,1.05,-2.4,scene,32);Cyl(.08,.1,1,stdM(0x2a2f3a,{metalness:.6}),2.6,.55,-2.4,scene,10);
   const chart=canvas(256,256),cg=chart.getContext('2d');cg.fillStyle='#0a1430';cg.fillRect(0,0,256,256);cg.strokeStyle='rgba(160,190,255,.5)';for(let i=1;i<5;i++){cg.beginPath();cg.arc(128,128,i*26,0,7);cg.stroke()}const cr=rng(7);cg.fillStyle='#fff';for(let i=0;i<90;i++){cg.fillRect(cr()*256,cr()*256,1.5,1.5)}cg.strokeStyle='rgba(255,220,150,.7)';cg.beginPath();cg.moveTo(60,80);cg.lineTo(100,110);cg.lineTo(150,90);cg.lineTo(190,140);cg.stroke();
@@ -112,7 +100,6 @@ function buildCeleste(ui){
       aur.uniforms.t.value=t;
       openK+=(openT-openK)*(1-Math.exp(-dt*1.1));const s=sstep(0,1,openK)*3.7;dA.position.z=s;dB.position.z=-s;
       qFrom.copy(tube.quaternion);qTo.setFromUnitVectors(upv,P[aim].dir);tube.quaternion.copy(qFrom.slerp(qTo,1-Math.exp(-dt*1.4)));
-      if(gl){qW.setFromUnitVectors(gl.axis,P[aim].dir);aimQ.slerp(qW,1-Math.exp(-dt*1.4));qi.copy(gl.pq).invert();tmpQ.copy(qi).multiply(aimQ).multiply(gl.pq).multiply(gl.restQ);gl.node.quaternion.copy(tmpQ)}
       P.forEach((p,i)=>{p.o.rotation.y+=dt*.05;p.o.visible=i===aim&&openK>.2});globe.rotation.y+=dt*.3;
       shots.forEach(sh=>{sh.t+=dt;if(sh.t>0&&sh.t<1){const k=sh.t;sh.m.material.opacity=Math.sin(k*Math.PI)*.9;sh.m.position.copy(sh.d.clone().multiplyScalar(k)).add(sh.o)}else if(sh.t>=1){sh.t=-rnd(2,7);const a=rnd(0,6.28),e=rnd(.25,.7);sh.o=V(Math.cos(a)*Math.cos(e)*300,Math.sin(e)*300,Math.sin(a)*Math.cos(e)*300);sh.d=V(rnd(-60,60),-rnd(20,50),rnd(-60,60));sh.m.lookAt(0,0,0);sh.m.rotation.z=Math.atan2(sh.d.y,sh.d.x)}});
       lamp.intensity=45+Math.sin(t*2.3)*2;doorL.intensity=220+Math.sin(t*5)*6;

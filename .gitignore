@@ -2,4 +2,3 @@ node_modules/
 *.blend1
 blender/out/
 .DS_Store
-__pycache__/

@@ -1,5 +1,5 @@
 /* Konsep flora — modul mandiri, dimuat oleh concepts/flora.html */
-import {loadModel,$,AC,BGU,Box,CY,Cart,Cyl,EXRLoader,EffectComposer,GTAOPass,OutputPass,RBox,Reflector,RenderPass,RoundedBoxGeometry,ST,ShaderPass,Sky,Sph,T,TG,UnrealBloomPass,V,Water,brickHF,camera,canvas,clamp,ctex,dtex,emis,envCache,fbm,floorMat,glow,glowTex,hdri,hex2,leafGeo,leafMat,leafTexture,lerp,loadHdri,makeSky,mesh,noShadow,pbr,perfHF,physM,plankHF,pmrem,reduce,renderer,ridgeHF,rnd,rng,sstep,starField,stdM,sunDir,sunLight,tagSprite,textTex,tileHF,waterNormal,weaveHF,wetFloor,windowTex} from '../core.js';
+import {$,AC,BGU,Box,CY,Cart,Cyl,EXRLoader,EffectComposer,GTAOPass,OutputPass,RBox,Reflector,RenderPass,RoundedBoxGeometry,ST,ShaderPass,Sky,Sph,T,TG,UnrealBloomPass,V,Water,brickHF,camera,canvas,clamp,ctex,dtex,emis,envCache,fbm,floorMat,glow,glowTex,hdri,hex2,leafGeo,leafMat,leafTexture,lerp,loadHdri,makeSky,mesh,noShadow,pbr,perfHF,physM,plankHF,pmrem,reduce,renderer,ridgeHF,rnd,rng,sstep,starField,stdM,sunDir,sunLight,tagSprite,textTex,tileHF,waterNormal,weaveHF,wetFloor,windowTex} from '../core.js';
 /* ==========================================================
    KONSEP 4 — FLORA : rumah kaca botani, siram & lampu tumbuh
    ========================================================== */
@@ -35,25 +35,8 @@ function buildFlora(ui){
   grass.frustumCulled=false;grass.castShadow=false;grass.receiveShadow=true;scene.add(grass);
   // pohon
   const treeM=pbr({fx:6,fy:6,oct:5,seed:33,c0:0x2a5a2a,c1:0x5a9a3a,nS:3,r0:.8,r1:1,rep:[2,2],w:256,mat:{vertexColors:false}});const barkM=pbr({fx:1,fy:12,oct:3,seed:34,c0:0x3a2c1e,c1:0x6a5238,nS:5,r0:.9,r1:1,rep:[1,3],w:256});
-  const blobs=new T.Group(),treeSpots=[];scene.add(blobs);
-  for(let i=0;i<38;i++){const a=rnd(0,6.28),d=rnd(48,120),x=Math.cos(a)*d*1.1,z=4+Math.sin(a)*d,y=hFn(x,z)-.05;const g=new T.Group();g.position.set(x,y,z);treeSpots.push({x,y,z});const h=rnd(6,12);Cyl(.3,.5,h*.6,barkM,0,h*.3,0,g,8);
-    for(let k=0;k<5;k++){const b=new T.IcosahedronGeometry(rnd(2.2,3.6),2),p=b.attributes.position;for(let q=0;q<p.count;q++){const f=1+.18*Math.sin(p.getX(q)*2+k)*Math.cos(p.getZ(q)*2.3);p.setXYZ(q,p.getX(q)*f,p.getY(q)*f*.85,p.getZ(q)*f)}b.computeVertexNormals();const m=mesh(b,treeM,rnd(-1.6,1.6),h*.6+rnd(-.5,1.6),rnd(-1.6,1.6),g)}blobs.add(g)}
-  // pohon ginkgo: model glTF (sumber: blender/convert_refs.py). Bola daun di atas menjadi cadangan bila gagal dimuat.
-  function ginkgoLeafTex(){const c=canvas(128,128),g=c.getContext('2d'),q=g.createLinearGradient(0,128,0,0);q.addColorStop(0,'#6fa83a');q.addColorStop(1,'#3f8a2c');g.fillStyle=q;g.fillRect(0,0,128,128);
-    g.strokeStyle='rgba(210,240,150,.55)';g.lineWidth=1.4;for(let i=-9;i<=9;i++){g.beginPath();g.moveTo(64,124);g.lineTo(64+i*7.2,6);g.stroke()}
-    const sh=g.createRadialGradient(64,128,10,64,128,150);sh.addColorStop(0,'rgba(0,0,0,0)');sh.addColorStop(1,'rgba(10,40,0,.28)');g.fillStyle=sh;g.fillRect(0,0,128,128);return ctex(c)}
-  Promise.all([loadModel('ginkgo'),loadModel('ginkgo_lo')]).then(([hi,lo])=>{
-    const lt=ginkgoLeafTex(),tints=[0xffffff,0xeaffb8,0xd2f0a0,0xf4ffd0];
-    const leafMat=tint=>new T.MeshStandardMaterial({map:lt,color:tint,roughness:.62,side:T.DoubleSide,alphaTest:0});
-    const near=[...treeSpots].sort((a,b)=>Math.hypot(a.x-20,a.z-38)-Math.hypot(b.x-20,b.z-38));
-    near.slice(0,8).forEach((sp,i)=>{const o=hi.scene.clone(true),lm=leafMat(tints[i%4]);o.traverse(m=>{if(!m.isMesh)return;m.material=/leaf/i.test(m.material.name)?lm:barkM;m.castShadow=m.receiveShadow=true});
-      o.position.set(sp.x,sp.y,sp.z);o.rotation.y=rnd(0,6.28);o.scale.setScalar(rnd(1,1.5));scene.add(o)});
-    const rest=near.slice(8),mats=[];lo.scene.updateMatrixWorld(true);
-    lo.scene.traverse(m=>{if(!m.isMesh)return;const leaf=/leaf/i.test(m.material.name),im=new T.InstancedMesh(m.geometry,leaf?leafMat(0xffffff):barkM,rest.length);const d=new T.Object3D();
-      rest.forEach((sp,k)=>{d.position.set(sp.x,sp.y,sp.z);d.rotation.set(0,(k*2.399)%6.28,0);d.scale.setScalar(1+(k%5)*.12);d.updateMatrix();im.setMatrixAt(k,d.matrix);if(leaf)im.setColorAt(k,new T.Color(tints[k%4]))});
-      im.castShadow=true;im.frustumCulled=false;scene.add(im)});
-    blobs.visible=false;scene.userData.aoDirty=true;
-  }).catch(()=>{});
+  for(let i=0;i<38;i++){const a=rnd(0,6.28),d=rnd(48,120),x=Math.cos(a)*d*1.1,z=4+Math.sin(a)*d,y=hFn(x,z)-.05;const g=new T.Group();g.position.set(x,y,z);const h=rnd(6,12);Cyl(.3,.5,h*.6,barkM,0,h*.3,0,g,8);
+    for(let k=0;k<5;k++){const b=new T.IcosahedronGeometry(rnd(2.2,3.6),2),p=b.attributes.position;for(let q=0;q<p.count;q++){const f=1+.18*Math.sin(p.getX(q)*2+k)*Math.cos(p.getZ(q)*2.3);p.setXYZ(q,p.getX(q)*f,p.getY(q)*f*.85,p.getZ(q)*f)}b.computeVertexNormals();const m=mesh(b,treeM,rnd(-1.6,1.6),h*.6+rnd(-.5,1.6),rnd(-1.6,1.6),g)}scene.add(g)}
   // jalan
   const gravel=pbr({fx:24,fy:24,oct:4,seed:41,c0:0x8a8478,c1:0xcfc8b8,nS:6,r0:.9,r1:1,rep:[3,20],w:256});
   const pathG=new T.PlaneGeometry(6,60);pathG.rotateX(-Math.PI/2);const path=new T.Mesh(pathG,gravel);path.position.set(0,.03,46);path.receiveShadow=true;scene.add(path);
