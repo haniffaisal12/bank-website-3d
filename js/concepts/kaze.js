@@ -1,5 +1,5 @@
 /* Konsep kaze — modul mandiri, dimuat oleh concepts/kaze.html */
-import {$,AC,BGU,Box,CY,Cart,Cyl,EXRLoader,EffectComposer,GTAOPass,OutputPass,RBox,Reflector,RenderPass,RoundedBoxGeometry,ST,ShaderPass,Sky,Sph,T,TG,UnrealBloomPass,V,Water,brickHF,camera,canvas,clamp,ctex,dtex,emis,envCache,fbm,floorMat,glow,glowTex,hdri,hex2,leafGeo,leafMat,leafTexture,lerp,loadHdri,makeSky,mesh,noShadow,pbr,perfHF,physM,plankHF,pmrem,reduce,renderer,ridgeHF,rnd,rng,sstep,starField,stdM,sunDir,sunLight,tagSprite,textTex,tileHF,waterNormal,weaveHF,wetFloor,windowTex} from '../core.js';
+import {loadModel,$,AC,BGU,Box,CY,Cart,Cyl,EXRLoader,EffectComposer,GTAOPass,OutputPass,RBox,Reflector,RenderPass,RoundedBoxGeometry,ST,ShaderPass,Sky,Sph,T,TG,UnrealBloomPass,V,Water,brickHF,camera,canvas,clamp,ctex,dtex,emis,envCache,fbm,floorMat,glow,glowTex,hdri,hex2,leafGeo,leafMat,leafTexture,lerp,loadHdri,makeSky,mesh,noShadow,pbr,perfHF,physM,plankHF,pmrem,reduce,renderer,ridgeHF,rnd,rng,sstep,starField,stdM,sunDir,sunLight,tagSprite,textTex,tileHF,waterNormal,weaveHF,wetFloor,windowTex} from '../core.js';
 /* ==========================================================
    KONSEP 5 — KAZE : gang neon hujan -> toko sneaker
    ========================================================== */
@@ -94,9 +94,20 @@ function buildKaze(ui){
     const rm=i%2?strip:strip2;const r=mesh(new T.TorusGeometry(1.28,.035,8,64),rm,x,.98,-16,scene);r.rotation.x=Math.PI/2;r.castShadow=false;
     const s=buildShoe(ways[i]);s.position.set(x,1.12,-16);s.scale.setScalar(i===1?1.2:.95);scene.add(s);
     const sp=new T.SpotLight(0xffffff,i===1?260:170,14,.5,.6,2);sp.position.set(x,5.6,-15);sp.target.position.set(x,1,-16);sp.castShadow=i===1;sp.shadow.mapSize.set(1024,1024);sp.shadow.bias=-.0005;scene.add(sp,sp.target);return s});
+  const shelfSpots=[];
   const shelfM=stdM(0x1a1626,{metalness:.5,roughness:.4}),ledS=new T.MeshBasicMaterial({color:new T.Color(2.4,2.4,2.8),toneMapped:false});
   [-1,1].forEach(sd=>[1.2,2.5,3.8].forEach(y=>{Box(.7,.06,14,shelfM,sd*8.6,y,-16,scene);Box(.05,.04,14,ledS,sd*8.32,y-.05,-16,scene).castShadow=false;
-    for(let z=-10;z>=-22;z-=1.9){const s=buildShoe(ways[(Math.random()*4)|0]);s.scale.setScalar(.34);s.position.set(sd*8.5,y+.03,z);s.rotation.y=sd>0?Math.PI/2:-Math.PI/2;scene.add(s)}}));
+    for(let z=-10;z>=-22;z-=1.9)shelfSpots.push({x:sd*8.5,y:y+.03,z,ry:sd>0?Math.PI/2:-Math.PI/2})}));
+  // sepatu: model glTF (sumber: blender/convert_refs.py). Bila gagal dimuat, dipakai versi prosedural di atas.
+  function fallbackShelf(){shelfSpots.forEach(sp=>{const s=buildShoe(ways[(Math.random()*4)|0]);s.scale.setScalar(.34);s.position.set(sp.x,sp.y,sp.z);s.rotation.y=sp.ry;scene.add(s)})}
+  Promise.all([loadModel('shoe'),loadModel('shoe_lo')]).then(([hi,lo])=>{
+    const mk=cw=>({mU:new T.MeshPhysicalMaterial({color:cw[0],roughness:.55,sheen:.6,sheenRoughness:.5,sheenColor:new T.Color(cw[0]).multiplyScalar(.6)}),mA:new T.MeshPhysicalMaterial({color:cw[1],roughness:.4,clearcoat:.6}),mS:new T.MeshStandardMaterial({color:cw[2],roughness:.7})});
+    const skin=(obj,m)=>obj.traverse(o=>{if(!o.isMesh)return;o.castShadow=o.receiveShadow=true;const n=o.material&&o.material.name;o.material=n==='Accent'?m.mA:n==='Sole'?m.mS:m.mU});
+    ped.forEach((s,i)=>{s.children.forEach(c=>{c.visible=false});const m=mk(ways[i]),o=hi.scene.clone(true);skin(o,m);s.add(o);s.userData.m=m});
+    const sets=ways.map(mk);
+    shelfSpots.forEach(sp=>{const o=lo.scene.clone(true);skin(o,sets[(Math.random()*4)|0]);o.scale.setScalar(.34);o.position.set(sp.x,sp.y,sp.z);o.rotation.y=sp.ry;scene.add(o)});
+    scene.userData.aoDirty=true;
+  }).catch(fallbackShelf);
   let wi=0,pi=0,spin=1,cartN=0;const cart=Cart(ui),prices=[1890000,2150000,1950000,2290000];
   function applyPal(){const p=pal[pi];neonA.forEach(m=>m.color.setHex(p[0]).multiplyScalar(m.isSpriteMaterial||m.blending===T.AdditiveBlending?1:NI));neonB.forEach(m=>m.color.setHex(p[1]).multiplyScalar(m.isSpriteMaterial||m.blending===T.AdditiveBlending?1:NI));lights.forEach(o=>o[0].color.setHex(p[o[1]]));il[0].color.setHex(p[1]);il[1].color.setHex(p[0])}
   applyPal();let lastL=0;
