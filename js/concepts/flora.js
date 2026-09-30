@@ -33,10 +33,37 @@ function buildFlora(ui){
   const NG=9000,grass=new T.InstancedMesh(gGeo,gMat,NG),dm=new T.Object3D();let gi=0;
   while(gi<NG){const a=rnd(0,6.28),d=rnd(22,90),x=Math.cos(a)*d*1.1,z=4+Math.sin(a)*d;if(Math.abs(x)<9&&z>16&&z<70)continue;dm.position.set(x,hFn(x,z)-.05,z);dm.rotation.set(0,rnd(0,6),0);dm.scale.setScalar(rnd(.7,1.5));dm.updateMatrix();grass.setMatrixAt(gi++,dm.matrix)}
   grass.frustumCulled=false;grass.castShadow=false;grass.receiveShadow=true;scene.add(grass);
-  // pohon
-  const treeM=pbr({fx:6,fy:6,oct:5,seed:33,c0:0x2a5a2a,c1:0x5a9a3a,nS:3,r0:.8,r1:1,rep:[2,2],w:256,mat:{vertexColors:false}});const barkM=pbr({fx:1,fy:12,oct:3,seed:34,c0:0x3a2c1e,c1:0x6a5238,nS:5,r0:.9,r1:1,rep:[1,3],w:256});
-  for(let i=0;i<38;i++){const a=rnd(0,6.28),d=rnd(48,120),x=Math.cos(a)*d*1.1,z=4+Math.sin(a)*d,y=hFn(x,z)-.05;const g=new T.Group();g.position.set(x,y,z);const h=rnd(6,12);Cyl(.3,.5,h*.6,barkM,0,h*.3,0,g,8);
-    for(let k=0;k<5;k++){const b=new T.IcosahedronGeometry(rnd(2.2,3.6),2),p=b.attributes.position;for(let q=0;q<p.count;q++){const f=1+.18*Math.sin(p.getX(q)*2+k)*Math.cos(p.getZ(q)*2.3);p.setXYZ(q,p.getX(q)*f,p.getY(q)*f*.85,p.getZ(q)*f)}b.computeVertexNormals();const m=mesh(b,treeM,rnd(-1.6,1.6),h*.6+rnd(-.5,1.6),rnd(-1.6,1.6),g)}scene.add(g)}
+  // pohon: batang bercabang bertingkat + ribuan daun kipas sebagai geometri (bukan kartu bertekstur), diperbanyak dengan instancing
+  const barkM=pbr({fx:1,fy:12,oct:3,seed:34,c0:0x3a2c1e,c1:0x6a5238,nS:5,r0:.9,r1:1,rep:[1,3],w:256});
+  function taperTube(curve,r0,r1,seg,rad){const g=new T.TubeGeometry(curve,seg,1,rad,false),pos=g.attributes.position,per=rad+1;
+    for(let i=0;i<pos.count;i++){const t=Math.floor(i/per)/seg,c=curve.getPointAt(t),rr=lerp(r0,r1,Math.pow(t,.8));pos.setXYZ(i,c.x+(pos.getX(i)-c.x)*rr,c.y+(pos.getY(i)-c.y)*rr,c.z+(pos.getZ(i)-c.z)*rr)}
+    g.deleteAttribute('uv');return g}
+  function makeTree(seed){
+    const r=rng(seed),parts=[],pts=[];
+    const trunk=new T.CatmullRomCurve3([V(0,0,0),V((r()-.5)*.5,3,(r()-.5)*.5),V((r()-.5)*.9,6.4,(r()-.5)*.9),V((r()-.5)*.7,9.6,(r()-.5)*.7)]);
+    parts.push(taperTube(trunk,.42,.13,14,7));
+    const branch=(o,dir,len,r0,r1,depth)=>{const mid=o.clone().addScaledVector(dir,len*.5).add(V(0,len*.12,0)),end=o.clone().addScaledVector(dir,len).add(V(0,len*.1,0));
+      const cv=new T.CatmullRomCurve3([o,mid,end]);parts.push(taperTube(cv,r0,r1,6,5));
+      for(let k=0;k<8;k++)pts.push(cv.getPointAt(.45+.55*k/7));
+      if(depth>0)for(let k=0;k<2;k++){const b=cv.getPointAt(.5+.3*k),az=r()*6.28,el=.6+r()*.6,d=V(Math.cos(az)*Math.sin(el),Math.cos(el)*.7,Math.sin(az)*Math.sin(el)).normalize();branch(b,d,len*.55,r1*1.3,r1*.35,depth-1)}};
+    for(let k=0;k<9;k++){const t=.38+.6*k/8,o=trunk.getPointAt(t),az=k*2.399+r()*.5,el=.5+r()*.6,d=V(Math.cos(az)*Math.sin(el),Math.cos(el),Math.sin(az)*Math.sin(el));branch(o,d,4.6-2.2*t+r(),.13,.03,1)}
+    for(let k=0;k<6;k++)pts.push(trunk.getPointAt(.85+.15*k/5).add(V(0,.4*k,0)));
+    return{bark:BGU.mergeGeometries(parts),pts}}
+  function leafGeo(){const g=new T.BufferGeometry(),P=[0,0,0],UV=[.5,0],R=.5,N=6;
+    for(let i=0;i<=N;i++){const a=(-.95+1.9*i/N),x=Math.sin(a)*R,y=Math.cos(a)*R*.95+.05,z=-Math.abs(x)*.25;P.push(x,y,z);UV.push(.5+Math.sin(a)*.5/.83,Math.cos(a))}
+    const idx=[];for(let i=1;i<=N;i++)idx.push(0,i,i+1);
+    g.setAttribute('position',new T.Float32BufferAttribute(P,3));g.setAttribute('uv',new T.Float32BufferAttribute(UV,2));g.setIndex(idx);g.computeVertexNormals();return g}
+  function leafTex(){const c=canvas(128,128),g=c.getContext('2d'),q=g.createLinearGradient(0,128,0,0);q.addColorStop(0,'#6fa83a');q.addColorStop(1,'#3f8a2c');g.fillStyle=q;g.fillRect(0,0,128,128);
+    g.strokeStyle='rgba(210,240,150,.5)';g.lineWidth=1.3;for(let i=-9;i<=9;i++){g.beginPath();g.moveTo(64,124);g.lineTo(64+i*7.2,6);g.stroke()}return ctex(c)}
+  const variants=[makeTree(11),makeTree(23),makeTree(37)],treeSpots=[];
+  for(let i=0;i<38;i++){const a=rnd(0,6.28),d=rnd(48,120),x=Math.cos(a)*d*1.1,z=4+Math.sin(a)*d;treeSpots.push({x,y:hFn(x,z)-.05,z,v:i%3,ry:rnd(0,6.28),sc:rnd(.9,1.5)})}
+  {const dm=new T.Object3D(),lm=new T.Matrix4(),tm=new T.Matrix4(),LPT=1300,leafI=new T.InstancedMesh(leafGeo(),new T.MeshStandardMaterial({map:leafTex(),roughness:.62,side:T.DoubleSide}),treeSpots.length*LPT),rr=rng(5);
+    const tints=[0xffffff,0xeaffb8,0xd2f0a0,0xf4ffd0];let li=0;
+    variants.forEach((vt,vi)=>{const list=treeSpots.filter(s=>s.v===vi),im=new T.InstancedMesh(vt.bark,barkM,list.length);im.castShadow=im.receiveShadow=true;
+      list.forEach((sp,k)=>{dm.position.set(sp.x,sp.y,sp.z);dm.rotation.set(0,sp.ry,0);dm.scale.setScalar(sp.sc);dm.updateMatrix();im.setMatrixAt(k,dm.matrix);tm.copy(dm.matrix);
+        for(let j=0;j<LPT;j++){const p=vt.pts[(rr()*vt.pts.length)|0];dm.position.set(p.x+(rr()-.5)*1.5,p.y+(rr()-.3)*1.3,p.z+(rr()-.5)*1.5);dm.rotation.set((rr()-.5)*2.2-.4,rr()*6.28,(rr()-.5)*1.6);dm.scale.setScalar(.95+rr()*.7);dm.updateMatrix();lm.multiplyMatrices(tm,dm.matrix);leafI.setMatrixAt(li,lm);leafI.setColorAt(li,new T.Color(tints[(rr()*4)|0]).multiplyScalar(.75+rr()*.3));li++}});
+      im.frustumCulled=false;scene.add(im)});
+    leafI.count=li;leafI.castShadow=true;leafI.frustumCulled=false;scene.add(leafI)}
   // jalan
   const gravel=pbr({fx:24,fy:24,oct:4,seed:41,c0:0x8a8478,c1:0xcfc8b8,nS:6,r0:.9,r1:1,rep:[3,20],w:256});
   const pathG=new T.PlaneGeometry(6,60);pathG.rotateX(-Math.PI/2);const path=new T.Mesh(pathG,gravel);path.position.set(0,.03,46);path.receiveShadow=true;scene.add(path);

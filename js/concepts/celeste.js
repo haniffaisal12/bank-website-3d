@@ -63,14 +63,61 @@ function buildCeleste(ui){
   const rimR=new T.Mesh(new T.CylinderGeometry(6.2,6.2,.35,64,1,true),new T.MeshStandardMaterial({color:0x9aa4b8,metalness:.6,roughness:.5,side:T.DoubleSide}));rimR.position.y=6.05;scene.add(rimR);
   const lamp=new T.PointLight(0xffc890,45,16,2);lamp.position.set(0,5.2,2);scene.add(lamp);
   const redL=new T.PointLight(0xff3a20,8,8,2);redL.position.set(3.5,1.6,-2.5);scene.add(redL);
-  // teleskop
-  const PX=-1.9,PZ=-1.2;Cyl(.5,.75,2.4,stdM(0x2a2f3a,{metalness:.6,roughness:.35}),PX,1.8,PZ,scene,32);
-  const mount=new T.Group();mount.position.set(PX,3.2,PZ);scene.add(mount);Sph(.55,stdM(0x3a4152,{metalness:.7,roughness:.35}),0,0,0,mount,32,20);
+  // teleskop refraktor kuningan di atas tripod (detail mengikuti pelajaran dari aset referensi: profil bertingkat, cincin,
+  // dudukan bercabang, tabung pencari dengan braket, sambungan kaki tiga bagian)
+  const PX=-1.9,PZ=-1.2;
   const brushed=pbr({hf:ridgeHF(90),fx:2,fy:60,oct:2,seed:30,c0:0xd8dade,c1:0xf6f7fa,nS:.8,r0:.28,r1:.42,rep:[6,1],metal:.9,w:256});
-  const tube=new T.Group();mount.add(tube);Cyl(.5,.55,4.4,brushed,0,2,0,tube,48);Cyl(.62,.62,.34,stdM(0x15181f,{roughness:.55}),0,4.3,0,tube,48);
-  mesh(new T.CylinderGeometry(.44,.44,.02,40),new T.MeshPhysicalMaterial({color:0x6a9aff,roughness:.05,metalness:.3,clearcoat:1,transparent:true,opacity:.6,envMapIntensity:2}),0,4.15,0,tube).castShadow=false;
-  Cyl(.13,.15,.5,brass,0,-.1,0,tube,20);[0,1].forEach(i=>Cyl(.16,.16,1.3,stdM(0x1a1d26,{metalness:.5,roughness:.4}),.78,1.6,0,tube,20));Sph(.06,new T.MeshBasicMaterial({color:new T.Color(3,.4,.3),toneMapped:false}),.78,2.35,0,tube,8,6);
-  Cyl(.5,.5,.1,brass,0,.55,0,tube,32);Cyl(.5,.5,.06,brass,0,3.6,0,tube,32);
+  const brassM=new T.MeshStandardMaterial({color:0xd0a24a,metalness:1,roughness:.26,envMapIntensity:1.4,normalMap:brushed.normalMap,normalScale:new T.Vector2(.35,.35)});
+  const steelM=new T.MeshStandardMaterial({color:0xc9ced6,metalness:1,roughness:.2,envMapIntensity:1.4});
+  const darkM=new T.MeshStandardMaterial({color:0x1d2128,metalness:.85,roughness:.32,envMapIntensity:1.2});
+  const blackM=stdM(0x0c0d10,{roughness:.55});
+  const glassM=new T.MeshPhysicalMaterial({color:0x14204a,metalness:.2,roughness:.03,clearcoat:1,envMapIntensity:2.6});
+  const rig=new T.Group();rig.position.set(PX,.64,PZ);scene.add(rig);
+  const L=(prof,mat,x,y,z,par,seg)=>mesh(new T.LatheGeometry(prof.map(q=>new T.Vector2(q[0],q[1])),seg||48),mat,x,y,z,par);
+  const strut=(p0,p1,r0,r1,mat,par)=>{const d=p0.clone().sub(p1),len=d.length(),m=new T.Mesh(new T.CylinderGeometry(r0,r1,len,20),mat);m.position.copy(p0).add(p1).multiplyScalar(.5);m.quaternion.setFromUnitVectors(V(0,1,0),d.normalize());m.castShadow=m.receiveShadow=true;par.add(m);return m};
+  // tripod: kaki tiga bagian dengan klem kuningan dan telapak karet
+  const HUB=1.32;
+  for(let i=0;i<3;i++){const a=i*Math.PI*2/3+.4,leg=new T.Group();leg.rotation.y=a;rig.add(leg);
+    const top=V(0,HUB,.09),mid=V(0,HUB*.52,.52),foot=V(0,.05,.98);
+    strut(top,mid,.046,.04,darkM,leg);strut(mid,foot,.038,.028,darkM,leg);
+    const clamp=Cyl(.056,.056,.13,brassM,0,0,0,leg,20);clamp.position.copy(mid);clamp.quaternion.setFromUnitVectors(V(0,1,0),top.clone().sub(foot).normalize());
+    const lug=RBox(.11,.08,.13,.02,brassM,0,HUB+.02,.1,leg);lug.rotation.x=.25;
+    Cyl(.052,.06,.05,blackM,0,.025,.99,leg,16);
+    Sph(.03,brassM,0,HUB*.52+.1,.54,leg,10,8);
+    // batang penyangga ke pusat
+    strut(V(0,HUB*.62,.34),V(0,HUB*.62,0),.012,.012,steelM,leg);
+  }
+  // pusat tripod dan kolom bertingkat
+  L([[.001,HUB-.09],[.15,HUB-.09],[.16,HUB-.05],[.13,HUB+.02],[.09,HUB+.05],[.001,HUB+.05]],brassM,0,0,0,rig,48);
+  L([[.001,HUB+.05],[.055,HUB+.05],[.06,HUB+.14],[.048,HUB+.2],[.048,HUB+.45],[.07,HUB+.48],[.07,HUB+.56],[.052,HUB+.6],[.052,HUB+.72],[.075,HUB+.75],[.075,HUB+.8],[.001,HUB+.8]],steelM,0,0,0,rig,40);
+  [.3,.62].forEach(y=>{const k=mesh(new T.CylinderGeometry(.018,.018,.13,10),blackM,.075,HUB+y,0,rig);k.rotation.z=Math.PI/2;Sph(.032,blackM,.135,HUB+y,0,rig,10,8)});
+  // garpu dudukan
+  const PV=HUB+1.02;
+  L([[.001,HUB+.8],[.11,HUB+.8],[.11,HUB+.86],[.001,HUB+.86]],brassM,0,0,0,rig,40);
+  [-1,1].forEach(sd=>{const arm=RBox(.05,.32,.07,.018,brassM,sd*.13,HUB+1.0,0,rig);arm.rotation.z=sd*.02;const cap=mesh(new T.CylinderGeometry(.045,.045,.06,24),brassM,sd*.13,PV,0,rig);cap.rotation.z=Math.PI/2;
+    Sph(.038,brassM,sd*.185,PV,0,rig,16,12);const kn=mesh(new T.CylinderGeometry(.028,.028,.07,12),blackM,sd*.23,PV,0,rig);kn.rotation.z=Math.PI/2});
+  const axle=mesh(new T.CylinderGeometry(.018,.018,.28,12),steelM,0,PV,0,rig);axle.rotation.z=Math.PI/2;
+  // tabung: sumbu +Y adalah arah bidik, titik putar di pusat garpu
+  const tube=new T.Group();tube.position.set(0,PV,0);rig.add(tube);
+  L([[.1,-.62],[.1,-.5],[.118,-.46],[.118,.62],[.124,.66],[.124,.9],[.15,.94],[.15,1.2],[.144,1.22],[.144,1.02]],brassM,0,0,0,tube,64);   // badan + tudung embun
+  L([[.144,1.02],[.13,.96],[.13,.9]],blackM,0,0,0,tube,64);
+  L([[.001,-.62],[.1,-.62],[.1,-.5],[.001,-.5]],brassM,0,0,0,tube,48);
+  [-.28,.06,.42,.62,.9,1.2].forEach((y,i)=>{const r=mesh(new T.TorusGeometry(i>3?.152:.12,.011,8,64),i%2?steelM:brassM,0,y,0,tube);r.rotation.x=Math.PI/2});
+  mesh(new T.CylinderGeometry(.128,.128,.01,48),glassM,0,.92,0,tube).castShadow=false;      // lensa objektif
+  // okuler bertingkat dan penampang fokus
+  L([[.001,-1.06],[.038,-1.06],[.046,-1.02],[.046,-.9],[.062,-.86],[.062,-.78],[.046,-.75],[.046,-.62]],steelM,0,0,0,tube,32);
+  mesh(new T.TorusGeometry(.05,.016,8,24),blackM,0,-1.04,0,tube).rotation.x=Math.PI/2;
+  const fo=RBox(.08,.18,.09,.02,brassM,.14,-.55,0,tube);const fk=mesh(new T.CylinderGeometry(.03,.03,.16,14),blackM,.22,-.55,0,tube);fk.rotation.z=Math.PI/2;
+  // tabung pencari dengan dua braket bercincin
+  const fx=.0,fz=-.235;
+  L([[.048,-.18],[.048,.3],[.058,.32],[.058,.44],[.05,.46],[.05,.5]],darkM,fx,0,fz,tube,32);
+  L([[.001,-.18],[.048,-.18],[.03,-.3],[.028,-.42],[.001,-.42]],steelM,fx,0,fz,tube,32);
+  mesh(new T.CylinderGeometry(.046,.046,.008,24),glassM,fx,.46,fz,tube).castShadow=false;
+  [-.02,.3].forEach(y=>{const r=mesh(new T.TorusGeometry(.058,.009,8,32),brassM,fx,y,fz,tube);r.rotation.x=Math.PI/2;
+    [-1,1].forEach(sd=>{const arm=RBox(.012,.014,.16,.004,brassM,fx+sd*.05,y,fz/2-.03,tube)});
+    const post=mesh(new T.CylinderGeometry(.011,.011,.12,8),steelM,0,y,fz*.6,tube);post.rotation.x=Math.PI/2});
+  // baut pengunci
+  [[.12,.3],[-.12,.3],[.12,-.35]].forEach(q=>Sph(.018,steelM,q[0],q[1],.03,tube,8,6));
   const upv=V(0,1,0),qFrom=new T.Quaternion(),qTo=new T.Quaternion();
   // isi ruang
   Cyl(1,1,.08,woodD,2.6,1.05,-2.4,scene,32);Cyl(.08,.1,1,stdM(0x2a2f3a,{metalness:.6}),2.6,.55,-2.4,scene,10);

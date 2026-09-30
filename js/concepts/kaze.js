@@ -28,6 +28,17 @@ function buildShoe(cw){
   for(let i=0;i<5;i++){const x=-.15+i*.2,y=.66-i*.075;[-1,1].forEach(s=>{const e=new T.Mesh(new T.TorusGeometry(.035,.012,6,10),stdM(0xcfd4da,{metalness:.9,roughness:.3}));e.position.set(x,y+.02,s*.21);e.rotation.y=Math.PI/2;g.add(e)});
     const c=new T.CatmullRomCurve3([V(x,y,-.2),V(x+.02,y+.06,0),V(x,y,.2)]);const lc=new T.Mesh(new T.TubeGeometry(c,8,.022,6),stdM(0xffffff,{roughness:.9}));lc.castShadow=true;g.add(lc)}
   [-1,1].forEach(s=>{const sg=new T.Shape();sg.moveTo(-.5,0);sg.bezierCurveTo(-.2,.28,.3,.28,.8,.02);sg.bezierCurveTo(.3,.1,-.15,.08,-.5,0);const sw=new T.Mesh(new T.ExtrudeGeometry(sg,{depth:.02,bevelEnabled:false}),mA);sw.position.set(0,.26,s*.355);if(s<0)sw.position.z=-.375;sw.rotation.y=0;g.add(sw);sw.castShadow=true});
+  // detail tambahan (pelajaran dari aset referensi: lapisan sol, alur, kerah berlapis, simpul tali, tab tumit)
+  const dk=stdM(0x101014,{roughness:.8});
+  const outline=sh.getPoints(72).map(p=>V(p.x*1.005,.15,-p.y*1.005));
+  const gv=new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(outline,true),120,.011,6,true),dk);gv.castShadow=false;g.add(gv);
+  const gv2=new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(outline.map(q=>V(q.x*.985,.03,q.z*.985)),true),120,.012,6,true),dk);g.add(gv2);
+  for(let k=0;k<11;k++){const x=-.85+k*.17,w=Math.max(.2,.4-.22*Math.abs(x)*.3);const lug=RBox(.05,.02,w*1.55,.008,dk,x,-.005,0,g);lug.castShadow=false}
+  const bowM=stdM(0xffffff,{roughness:.9});
+  [-1,1].forEach(sd=>{const c=new T.CatmullRomCurve3([V(-.18,.7,0),V(-.3,.82,sd*.13),V(-.42,.8,sd*.08),V(-.26,.72,sd*.03),V(-.18,.7,0)]);const t=new T.Mesh(new T.TubeGeometry(c,16,.016,6),bowM);t.castShadow=true;g.add(t);
+    const tail=new T.CatmullRomCurve3([V(-.18,.7,0),V(-.08,.62,sd*.18),V(.02,.5,sd*.25)]);g.add(new T.Mesh(new T.TubeGeometry(tail,10,.014,6),bowM))});
+  const tab=RBox(.05,.24,.12,.025,mA,-1.05,.68,0,g);tab.rotation.z=.18;
+  const pad=new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3([V(-.15,.62,-.2),V(-.5,.78,-.26),V(-.88,.8,-.2),V(-1.0,.74,0),V(-.88,.8,.2),V(-.5,.78,.26),V(-.15,.62,.2)]),40,.06,8),mU);pad.castShadow=true;g.add(pad);
   g.userData.m={mU,mA,mS};g.userData.parts={mU,mA,mS};return g}
 function buildKaze(ui){
   const scene=new T.Scene();scene.background=new T.Color(0x0a0612);scene.fog=new T.FogExp2(0x100a1c,.022);
