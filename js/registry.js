@@ -55,5 +55,13 @@ export const REG=[
   "acc": "#e8ff3a",
   "tag": "Showroom kaca yang menyala di malam hari",
   "href": "concepts/volt.html"
+ },
+ {
+  "id": "genom",
+  "name": "HELIX",
+  "type": "Company Profile · Sains",
+  "acc": "#5fe6ff",
+  "tag": "Semua cerita dimulai dari satu sel",
+  "href": "concepts/genom.html"
  }
 ];

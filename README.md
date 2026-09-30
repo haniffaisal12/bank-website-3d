@@ -12,7 +12,8 @@ Bank inspirasi website 3D sinematik untuk **company profile** dan **e-commerce**
 | `concepts/flora.html` | E-commerce | Rumah kaca botani, siram dan lampu tumbuh |
 | `concepts/kaze.html` | E-commerce | Gang neon berhujan ke butik sneaker |
 | `concepts/celeste.html` | E-commerce / profil | Observatorium gunung, teleskop dan planet |
-| `concepts/volt.html` | E-commerce | Showroom mobil listrik dengan konfigurator |
+| `concepts/volt.html` | E-commerce | Showroom SUV listrik dengan konfigurator |
+| `concepts/genom.html` | Company profile | Klinik genomik: menyelam dari sel ke heliks DNA |
 
 `index.html` adalah beranda: portal 3D ke semua konsep dan daftar ide yang belum dibangun.
 
