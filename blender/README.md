@@ -11,19 +11,18 @@ python blender/volt_car.py glb        # keluaran: blender/out/volt_car.glb
 
 Atau lewat Blender biasa: `blender -b -P blender/volt_car.py -- render`.
 
-`volt_car.py` membangun mobil VOLT E-1 dengan detail setingkat aset referensi (lihat `STUDI_CHANDELIER.md`):
-bodi di-loft dari penampang superellipse dengan kaca yang mengikuti garis jendela, lubang roda hasil boolean, celah panel
-yang diproyeksikan ke permukaan, gagang pintu, spion, lampu DRL dan lampu belakang, ban bertapak, dua model velg
-(Aero dan Sport), cakram rem, kaliper, dan interior sederhana. Hasilnya diekspor ke `assets/models/volt_car.glb`
-dan dimuat oleh `js/concepts/volt.js`, yang mengganti bahan berdasarkan nama (Cat, Kaca, Velg, dan seterusnya).
+`volt_car.py` membangun SUV listrik VOLT X1. Proporsinya diturunkan dari pengukuran model SUV besar sebagai acuan
+(profil atap, lebar per ketinggian, posisi roda), lalu sengaja dibuat berbeda: hidung tertutup dengan bar cahaya tanpa
+gril, atap meluncur ke belakang, garis pinggang naik ke belakang, atap kaca, dan rel atap tipis. Detailnya: celah panel
+pintu, gagang rata, spion, trim lengkung roda, cladding samping, lampu DRL dan lampu belakang penuh, plat, interior,
+ban bertapak, dua model velg (Aero dan Sport), cakram rem, dan kaliper. Diekspor ke `assets/models/volt_car.glb` dan
+dimuat oleh `js/concepts/volt.js`, yang mengganti bahan berdasarkan nama (Cat, Kaca, Velg, dan seterusnya).
 
 ```bash
 python blender/volt_car.py render --fast   # pratinjau cepat, sekitar 40 detik
 python blender/volt_car.py glb             # ekspor GLB
 cp blender/out/volt_car.glb assets/models/volt_car.glb
 ```
-
-Render 1600x900 dengan 128 sampel dan denoiser OpenImageDenoise butuh beberapa menit di 4 inti CPU.
 
 ## Status
 

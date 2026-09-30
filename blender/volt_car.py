@@ -1,4 +1,4 @@
-"""VOLT E-1 — model mobil dengan detail setingkat aset referensi (lihat STUDI_CHANDELIER.md).
+"""VOLT X1 (SUV listrik) — model mobil dengan detail setingkat aset referensi (lihat STUDI_CHANDELIER.md).
   python volt_car.py render|glb|both [--fast]
 Pelajaran yang dipakai: siluet dipahat (bukan primitif), normal terbobot + sisi tajam ber-bevel, bagian berulang,
 kaca dan lampu sebagai bahan tersendiri, celah panel nyata, ban dengan tapak, velg berlapis."""
@@ -52,17 +52,19 @@ def RBox(w,h,d,r,material,loc):
     smooth(o);return o
 
 # ================= bodi =================
-XF,XR=2.36,-2.36
-TOP=[(XR,.90),(-2.28,.99),(-2.05,1.07),(-1.7,1.22),(-1.2,1.35),(-.6,1.42),(-.05,1.44),(.35,1.38),(.72,1.20),(1.08,1.02),(1.45,.97),(1.85,.92),(2.2,.85),(XF,.74)]
-BOT=[(XR,.44),(-2.2,.31),(-1.7,.25),(1.7,.25),(2.15,.28),(XF,.36)]
-WID=[(XR,.72),(-2.1,.88),(-1.5,.955),(-.5,.965),(.5,.965),(1.5,.95),(2.1,.90),(XF,.76)]
-BELT=lambda x:.985+.015*math.sin(x*1.3)
-def cabin_mask(x):return smoothstep(-2.05,-1.8,x)*(1-smoothstep(.72,1.12,x))
+XF,XR=2.45,-2.45
+# Proporsi diturunkan dari model SUV besar sebagai acuan (kap pendek dan tinggi, kabin panjang, atap datar),
+# lalu diubah: hidung tertutup tanpa gril, atap meluncur ke belakang (fastback), garis pinggang naik ke belakang.
+TOP=[(XR,1.16),(-2.38,1.20),(-2.15,1.28),(-1.75,1.42),(-1.2,1.58),(-.7,1.70),(-.2,1.74),(.3,1.72),(.62,1.64),(.9,1.48),(1.12,1.33),(1.4,1.25),(1.8,1.20),(2.2,1.14),(2.4,1.04),(XF,.90)]
+BOT=[(XR,.56),(-2.3,.42),(-1.95,.34),(1.95,.34),(2.3,.36),(XF,.48)]
+WID=[(XR,.78),(-2.2,.88),(-1.7,.95),(-1.0,.965),(0,.945),(1.0,.955),(1.7,.965),(2.2,.90),(XF,.76)]
+BELT=lambda x:1.16+.05*smoothstep(1.2,-2.2,x)
+def cabin_mask(x):return smoothstep(-2.3,-1.9,x)*(1-smoothstep(.55,1.15,x))
 N1,N2,N3=16,12,8            # jumlah segmen: badan bawah, jendela, atap
 K=N1+N2+N3
 def sv_lohi(x):
     t=spline(TOP,x);bt=spline(BOT,x);h=t-bt
-    return (BELT(x)+.012-bt)/h,(t-bt-.085)/h
+    return (BELT(x)+.012-bt)/h,(t-bt-.10)/h
 def svs_for(x):
     lo,hi=sv_lohi(x);lo=max(.35,min(.7,lo));hi=max(lo+.1,min(.97,hi))
     a=[lo*(i/N1)**1.0 for i in range(N1)]
@@ -75,7 +77,7 @@ def pt_at(x,sv,side):
     if sv<.5:wf=1-.085*(1-sv/.5)**2
     else:
         k=(sv-.5)/.5;wf=1-(.36*cm+.16*(1-cm))*k**1.8
-    e=2/(2.4+.9*cm)
+    e=2/(3.6+.5*cm)
     return (w*wf*math.copysign(abs(c)**e,c) if c!=0 else 0.0, b+(t-b)*sv)
 def body_ring(x):
     svs=svs_for(x)
@@ -94,9 +96,11 @@ def make_body():
             f=bm.faces.new((rows[i][j],rows[i][(j+1)%M],rows[i+1][(j+1)%M],rows[i+1][j]))
             seg=j if j<K else (2*K-1-j)         # indeks segmen ketinggian (0..K-1) di sisi kiri/kanan
             g=False
-            wind=(.40<xm<1.12) or (-2.10<xm<-1.62)
-            if wind and seg>=N1:g=True
-            if (-1.62<=xm<=.40) and N1<=seg<N1+N2 and not(-.36<xm<-.24):g=True
+            g=False
+            if .36<xm<1.14 and seg>=N1:g=True
+            if -2.05<xm<-1.62 and seg>=N1+N2:g=True
+            if -1.9<=xm<=.36 and N1<=seg<N1+N2 and not(-.62<xm<-.5) and not(.02<xm<.12):g=True
+            if -1.45<xm<.12 and seg>=N1+N2+3:g=True
             f.material_index=1 if g else 0
     for end in(0,N):
         vs=rows[end];c=sum((v.co for v in vs),Vector())/len(vs);cv=bm.verts.new(c)
@@ -108,10 +112,10 @@ def make_body():
     return ob
 
 # ================= roda =================
-WB=1.43;WR=.35;TRACK=.885
+WB=1.48;WR=.42;TRACK=.93;RS=1.3
 def make_tire():
     NT=120;NP=40;me=bpy.data.meshes.new('Ban');bm=bmesh.new();rows=[]
-    W=.245;Rr=.185   # lebar, jari-jari velg
+    W=.29;Rr=.26   # lebar, jari-jari velg
     for i in range(NT):
         th=i/NT*math.tau;groove=1 if(int(i/NT*46)%2==0) else 0;row=[]
         for j in range(NP):
@@ -230,28 +234,29 @@ def build(paint_color):
     body=make_body();body.data.materials.append(M['paint']);body.data.materials.append(M['glass']);body.parent=root
     # lubang roda (boolean) + liner
     for (x,s) in((WB,1),(WB,-1),(-WB,1),(-WB,-1)):
-        c=cyl_obj('arch',WR+.075,.42,(x,s*(TRACK+.02),WR));boolean_diff(body,c);bpy.data.objects.remove(c)
+        c=cyl_obj('arch',WR+.085,.5,(x,s*(TRACK+.02),WR));boolean_diff(body,c);bpy.data.objects.remove(c)
     bvh_ob=body
     dg=bpy.context.evaluated_depsgraph_get();ev=body.evaluated_get(dg);bvh=BVHTree.FromObject(body,dg)
     # celah panel di sisi kiri dan kanan
     for side in(1,-1):
         lines=[
-            [(1.02,.30),(1.03,.55),(1.00,.80),(.86,.99)],            # tepi depan pintu depan
-            [(-.30,.30),(-.31,.60),(-.33,.99)],                       # antara pintu depan/belakang
-            [(-1.32,.31),(-1.36,.60),(-1.33,.99)],                    # tepi belakang pintu belakang
-            [(1.02,.30),(.2,.27),(-.6,.27),(-1.32,.31)],              # garis sill
+            [(1.12,.34),(1.14,.62),(1.13,.95),(.98,1.19)],
+            [(.0,.34),(-.01,.70),(-.02,1.19)],
+            [(-1.0,.34),(-1.03,.70),(-1.0,1.21)],
+            [(1.12,.32),(.3,.31),(-.5,.31),(-1.0,.32)],
+            [(.98,1.19),(.2,1.20),(-.6,1.22),(-1.4,1.26)],
         ]
         for i,l in enumerate(lines):
             pts=project_line(bvh,l,side,.001)
             if len(pts)>=2:tube('Celah%d_%d'%(i,side),pts,.0022,M['seam']).parent=root
         # gagang pintu rata
-        for (hx,hz) in((.42,.90),(-.85,.90)):
+        for (hx,hz) in((.55,1.08),(-.42,1.08)):
             p0=project_line(bvh,[(hx-.09,hz),(hx+.09,hz)],side,.004)
             if len(p0)==2:tube('Gagang',p0,.009,M['trim']).parent=root
         # spion
-        p=project_line(bvh,[(1.0,.99)],side,.03)
+        p=project_line(bvh,[(1.02,1.16)],side,.03)
         if p:
-            mir=RBox(.10,.18,.09,.03,M['paint'],(p[0].x,p[0].y+side*.06,p[0].z+.04));mir.parent=root
+            mir=RBox(.13,.2,.10,.035,M['paint'],(p[0].x,p[0].y+side*.06,p[0].z+.04));mir.parent=root
     # celah kap mesin dan bagasi
     hood=[(1.0,.93)]  # placeholder
     # lampu depan: strip DRL + lensa
@@ -271,7 +276,7 @@ def build(paint_color):
             if h[0] is not None:out.append(h[0]+h[1]*off)
         return out
     ys=[i*.05 for i in range(-17,18)]
-    drl=proj_x(ys,.70);tube('DRL',drl,.011,M['drl']).parent=root
+    drl=proj_x(ys,.80);tube('DRL',drl,.011,M['drl']).parent=root
     lens_l=proj_x([i*.03 for i in range(6,30)],.66,.002);lens_r=proj_x([-i*.03 for i in range(6,30)],.66,.002)
     for l in(lens_l,lens_r):
         if len(l)>2:tube('Lensa',l,.026,M['lens']).parent=root
@@ -282,17 +287,41 @@ def build(paint_color):
             h=bvh.ray_cast(Vector((-4,y,z)),Vector((1,0,0)))
             if h[0] is not None:out.append(h[0]+h[1]*off)
         return out
-    tail=proj_xr([i*.05 for i in range(-17,18)],1.00);tube('LampuBelakang',tail,.014,M['tail']).parent=root
-    tl=proj_xr([i*.05 for i in range(-17,18)],.60);tube('DiffuserGaris',tl,.006,M['trim']).parent=root
+    tail=proj_xr([i*.05 for i in range(-17,18)],1.02);tube('LampuBelakang',tail,.014,M['tail']).parent=root
+    tl=proj_xr([i*.05 for i in range(-17,18)],.66);tube('DiffuserGaris',tl,.006,M['trim']).parent=root
+    def proj_z(pts,off=.02):
+        out=[]
+        for (x,y) in pts:
+            h=bvh.ray_cast(Vector((x,y,3)),Vector((0,0,-1)))
+            if h[0] is not None:out.append(h[0]+h[1]*off)
+        return out
+    for sd in(1,-1):
+        rail=proj_z([(x,sd*.74) for x in [i*.12-1.5 for i in range(0,26)]],.045)
+        if len(rail)>3:tube('RelAtap',rail,.017,M['trim']).parent=root
+        for x in(-1.4,-.6,.2):
+            p=proj_z([(x,sd*.74)],.0)
+            if p:RBox(.05,.05,.05,.015,M['trim'],(p[0].x,p[0].y,p[0].z+.02)).parent=root
+    for side in(1,-1):
+        for wx in(WB,-WB):
+            arc=[(wx+(WR+.10)*math.cos(t),WR+(WR+.10)*math.sin(t)) for t in [math.pi*k/24 for k in range(0,25)]]
+            pts=project_line(bvh,arc,side,.004)
+            if len(pts)>4:tube('TrimRoda',pts,.028,M['black']).parent=root
+        clad=project_line(bvh,[(x,.44) for x in [i*.14-1.05 for i in range(0,16)]],side,.006)
+        if len(clad)>3:tube('CladdingSill',clad,.05,M['black']).parent=root
+    lo=proj_x(ys,.56,.004);tube('IntakeBawah',lo,.038,M['black']).parent=root
+    ss=proj_x([i*.05 for i in range(-9,10)],.70,.003);tube('BarSensor',ss,.02,M['lens']).parent=root
+    pc=project_line(bvh,[(-1.86,1.0)],1,.012)
+    if pc:
+        pf=RBox(.14,.02,.1,.03,M['paint'],(pc[0].x,pc[0].y,pc[0].z));pf.parent=root
     # plat nomor
-    pl=RBox(.03,.52,.13,.01,M['plate'],(-2.36,0,.58));pl.parent=root
+    pl=RBox(.03,.52,.13,.01,M['plate'],(-2.44,0,.7));pl.parent=root
     # sill dan difuser
     # atap panorama (sedikit lebih terang) tidak dipakai
     # interior sederhana terlihat lewat kaca
-    for x in(.2,-.7):
+    for x in(.35,-.6,-1.45):
         for y in(-.4,.4):
-            seat=RBox(.5,.5,.14,.06,M['leather'],(x,y,.55));seat.parent=root
-            back=RBox(.14,.5,.55,.06,M['leather'],(x-.26,y,.85));back.parent=root;back.rotation_euler=(0,-.2,0)
+            seat=RBox(.5,.5,.16,.06,M['leather'],(x,y,.68));seat.parent=root
+            back=RBox(.14,.5,.6,.06,M['leather'],(x-.26,y,1.0));back.parent=root;back.rotation_euler=(0,-.2,0)
     # roda
     wheels=[]
     ws=make_wheel_set(M)
@@ -301,6 +330,8 @@ def build(paint_color):
             o.rotation_euler[2]=rot_z if rot_z else 0
             o.location=Vector(loc)
     templ=[ws['tire'],ws['disc'],ws['cal']]+ws['sport']+ws['aero']+ws['nuts']
+    for o in [ws['disc'],ws['cal']]+ws['sport']+ws['aero']:o.scale=(RS,RS,RS)
+    for o in ws['nuts']:o.location=o.location*RS
     names={}
     for k,(x,s) in enumerate(((WB,1),(WB,-1),(-WB,1),(-WB,-1))):
         grp=bpy.data.objects.new('Roda%d'%k,None);link(grp,root)
@@ -324,7 +355,7 @@ def studio(hdri):
     f.data.materials.append(mat('Lantai',(.018,.02,.026,1),metal=.05,rough=.14))
     for (loc,rot,sz,en) in [((-5,-6,4.5),(1.1,0,-.6),5,2200),((6,-4,3),(1.2,0,.9),4,1300),((0,4,5),(0,0,0),6,900),((-6,5,2.5),(1.3,0,-2.4),3,900)]:
         bpy.ops.object.light_add(type='AREA',location=loc,rotation=rot);a=bpy.context.object;a.data.size=sz;a.data.energy=en
-    bpy.ops.mesh.primitive_torus_add(major_radius=3.6,minor_radius=.04,major_segments=160,minor_segments=8,location=(0,0,.02))
+    bpy.ops.mesh.primitive_torus_add(major_radius=4.2,minor_radius=.04,major_segments=160,minor_segments=8,location=(0,0,.02))
     r=bpy.context.object;r.data.materials.append(mat('Cincin',(0,0,0,1),emit=(.85,1,.15,1),es=8))
 def render(path,cam,tgt,res,samples,lens=45):
     sc=bpy.context.scene;sc.render.engine='CYCLES';c=sc.cycles;c.samples=samples;c.use_denoising=True;c.denoiser='OPENIMAGEDENOISE';c.device='CPU'
@@ -334,12 +365,12 @@ def render(path,cam,tgt,res,samples,lens=45):
     t=cm.constraints.new('TRACK_TO');e=bpy.data.objects.new('t',None);e.location=tgt;bpy.context.collection.objects.link(e);t.target=e;t.track_axis='TRACK_NEGATIVE_Z';t.up_axis='UP_Y'
     sc.camera=cm;sc.render.filepath=path;sc.render.image_settings.file_format='JPEG';sc.render.image_settings.quality=90;bpy.ops.render.render(write_still=True)
 bpy.ops.wm.read_factory_settings(use_empty=True)
-root,M=build(0xB50F26)
+root,M=build(0x9aa0a8)
 if MODE in('render','both'):
     studio(os.path.join(HERE,'..','assets','hdri','studio.exr'))
     res=(960,540) if FAST else (1600,900);sm=32 if FAST else 128
-    render(os.path.join(OUT,'volt_v2_3q.jpg'),(6.2,-5.6,1.5),(0,0,.6),res,sm)
-    render(os.path.join(OUT,'volt_v2_side.jpg'),(0,-7.5,.75),(0,0,.7),res,sm,lens=55)
+    render(os.path.join(OUT,'volt_v2_3q.jpg'),(7.6,-6.6,2.0),(0,0,.85),res,sm)
+    render(os.path.join(OUT,'volt_v2_side.jpg'),(0,-9,.9),(0,0,.85),res,sm,lens=55)
 if MODE in('glb','both'):
     for o in list(bpy.data.objects):
         if o.name.startswith(('Lantai','Circle','Torus','Cincin')):bpy.data.objects.remove(o)

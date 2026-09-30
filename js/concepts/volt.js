@@ -38,7 +38,7 @@ function buildVolt(ui){
   Box(44,12,.4,wallM,-22-10,6,HZ0+.2,hall);
   [-1,1].forEach(s=>{Box(19,12,.4,wallM,s*12.5,6,HZ0,hall)});
   const hfl=wetFloor(44,40,{color:0x06070b,mix:.6,dist:.012,rep:1/8,tex:1024,rough:pbr({hf:tileHF(8,.02),fx:8,fy:8,c0:0x0e1118,c1:0x222732,nS:2,w:256}).normalMap});hfl.position.set(0,.02,-42);hall.add(hfl);
-  const bwc=canvas(2048,512),bw=bwc.getContext('2d');bw.fillStyle='#000';bw.fillRect(0,0,2048,512);bw.fillStyle='#fff';bw.font='800 360px sans-serif';bw.textAlign='center';bw.textBaseline='middle';bw.fillText('VOLT  E-1',1024,280);
+  const bwc=canvas(2048,512),bw=bwc.getContext('2d');bw.fillStyle='#000';bw.fillRect(0,0,2048,512);bw.fillStyle='#fff';bw.font='800 360px sans-serif';bw.textAlign='center';bw.textBaseline='middle';bw.fillText('VOLT  X1',1024,280);
   mesh(new T.PlaneGeometry(30,7.5),new T.MeshBasicMaterial({map:ctex(bwc),color:new T.Color(.2,.24,.3),toneMapped:false,transparent:true,blending:T.AdditiveBlending,depthWrite:false}),0,6.5,HZ1+.25,hall).castShadow=false;
   [3,5.6,8.2].forEach(y=>Box(30,.05,.05,ringM,0,y-2.2,HZ1+.3,hall).castShadow=false);
   const CX=0,CZ=-44;
@@ -48,9 +48,9 @@ function buildVolt(ui){
   const ceilRing=mesh(new T.TorusGeometry(4.5,.09,10,96),new T.MeshBasicMaterial({color:new T.Color(3,3.2,3.6),toneMapped:false}),0,8.6,0,dock);ceilRing.rotation.x=Math.PI/2;ceilRing.castShadow=false;
   [-1,1].forEach(s=>{const rl=new T.RectAreaLight(0xffffff,4,7,2.2);rl.position.set(s*9,4.2,CZ+1);rl.lookAt(CX,1,CZ);hall.add(rl)});
   const spot=new T.SpotLight(0xffffff,70,20,.55,.7,2);spot.position.set(CX+2,9.5,CZ+2);spot.target.position.set(CX,.8,CZ);spot.castShadow=true;spot.shadow.mapSize.set(1024,1024);spot.shadow.bias=-.0003;hall.add(spot,spot.target);
-  const ug=new T.PointLight(limeD,26,8,2);ug.position.set(CX,.5,CZ);hall.add(ug);
+  const ug=new T.PointLight(limeD,6,6,2);ug.position.set(CX,.5,CZ);hall.add(ug);
   // mobil
-  const car=new T.Group();dock.add(car);car.position.y=.3;car.scale.setScalar(1.05);
+  const car=new T.Group();dock.add(car);car.position.y=.3;car.scale.setScalar(.98);
   const paints=[[0xc4102c,'Merah Api'],[0xf3f4f6,'Putih Mutiara'],[0x0a1c4a,'Biru Malam'],[0x0d3a2b,'Hijau Hutan'],[0x8a9096,'Abu Titanium']];
   const paint=new T.MeshPhysicalMaterial({color:paints[0][0],metalness:.55,roughness:.24,clearcoat:1,clearcoatRoughness:.025,envMapIntensity:1.4});
   const hlM=new T.MeshBasicMaterial({color:new T.Color(.25,.25,.28),toneMapped:false}),tlM=new T.MeshBasicMaterial({color:new T.Color(1.8,.1,.1),toneMapped:false});
@@ -100,15 +100,15 @@ function buildVolt(ui){
       rims(v){rimsAero.forEach(o=>o.visible=!v);rimsSport.forEach(o=>o.visible=v)},
       lights(v){lightsOn=v},
       spin(v){spin=v?0:1},
-      cart(){cart('VOLT E-1 '+paints[pi][1],689000000)}
+      cart(){cart('VOLT X1 '+paints[pi][1],689000000)}
     }};
 }
 
-export const concept={id:'volt',hdris:["studio"],name:'VOLT E-1',type:'E-commerce · Otomotif',acc:'#e8ff3a',build:buildVolt,
- brief:{Sektor:'Merek mobil listrik. E-commerce dengan konfigurator langsung.',Kamera:'Plaza malam menuju fasad kaca, dolly lurus di lorong cincin cahaya, lalu berhenti di tiga perempat depan mobil di atas piringan putar.',Interaksi:'Ganti warna cat lima pilihan, velg Aero atau Sport, lampu depan menyala dengan berkas cahaya, hentikan putaran, tambah ke keranjang.',Teknik:'Bodi mobil dibentuk dari penampang superellipse yang di-loft, cat dengan lapisan clearcoat, kaca gelap memantul, lampu area lunak untuk sorot cahaya di bodi, dan lantai mengilap dengan pantulan.',Varian:'Tambah pilihan interior, kamera mengitari mobil dengan seret jari, dan estimasi cicilan.'},
+export const concept={id:'volt',hdris:["studio"],name:'VOLT X1',type:'E-commerce · Otomotif',acc:'#e8ff3a',build:buildVolt,
+ brief:{Sektor:'SUV listrik. E-commerce dengan konfigurator langsung.',Kamera:'Plaza malam menuju fasad kaca, dolly lurus di lorong cincin cahaya, lalu berhenti di tiga perempat depan mobil di atas piringan putar.',Interaksi:'Ganti warna cat lima pilihan, velg Aero atau Sport, lampu depan menyala dengan berkas cahaya, hentikan putaran, tambah ke keranjang.',Teknik:'Bodi SUV dibuat di Blender (proporsi diturunkan dari model SUV besar sebagai acuan lalu diubah: hidung tertutup, atap fastback) dan dimuat sebagai glTF, cat dengan lapisan clearcoat, kaca gelap memantul, lampu area lunak untuk sorot cahaya di bodi, dan lantai mengilap dengan pantulan.',Varian:'Tambah pilihan interior, kamera mengitari mobil dengan seret jari, dan estimasi cicilan.'},
  slides:[
   {tag:'Bab 1 · Plaza',title:'Showroom kaca yang menyala di malam hari',text:'Kamera rendah di plaza basah. Dari luar, mobil sudah terlihat berputar pelan di ujung aula.',cam:[18,2.2,34],look:[0,4,-16]},
   {tag:'Bab 2 · Pintu',title:'Melangkah ke dalam',text:'Kamera mendekat ke pintu kaca setinggi 10 meter. Pantulan lampu jalan ikut bergeser di lantai.',cam:[3,1.7,4],look:[0,3,-22],ui:[ST('range','Jarak tempuh','620 km')]},
   {tag:'Bab 3 · Lorong cahaya',title:'Satu gerakan lurus menuju mobil',text:'Cincin lampu memberi ritme dan arah. Kamera meluncur tanpa cut sampai aula terbuka.',cam:[0,1.7,-15],look:[0,1.5,-40]},
-  {tag:'Bab 4 · Aula',title:'Rakit mobil Anda sendiri',text:'Ganti cat, velg, dan lampu depan. Piringan berhenti kapan saja agar Anda bisa memeriksa satu sisi.',cam:[6.2,2.4,-36.4],look:[-4.6,-.2,-41.8],ui:[CY('paint','Warna cat',['Merah','Putih','Biru','Hijau','Titanium']),TG('rims','Velg',['Aero','Sport']),TG('lights','Lampu depan',['Mati','Nyala']),TG('spin','Putaran',['Jalan','Berhenti']),AC('cart','Tambah ke keranjang'),ST('color','Warna','Merah Api'),ST('cart','Keranjang','0 item')]}
+  {tag:'Bab 4 · Aula',title:'Rakit mobil Anda sendiri',text:'Ganti cat, velg, dan lampu depan. Piringan berhenti kapan saja agar Anda bisa memeriksa satu sisi.',cam:[5.6,2.1,-37],look:[-3.4,.3,-42.2],ui:[CY('paint','Warna cat',['Merah','Putih','Biru','Hijau','Titanium']),TG('rims','Velg',['Aero','Sport']),TG('lights','Lampu depan',['Mati','Nyala']),TG('spin','Putaran',['Jalan','Berhenti']),AC('cart','Tambah ke keranjang'),ST('color','Warna','Merah Api'),ST('cart','Keranjang','0 item')]}
  ]};

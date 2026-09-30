@@ -50,7 +50,7 @@ export const REG=[
  },
  {
   "id": "volt",
-  "name": "VOLT E-1",
+  "name": "VOLT X1",
   "type": "E-commerce · Otomotif",
   "acc": "#e8ff3a",
   "tag": "Showroom kaca yang menyala di malam hari",
