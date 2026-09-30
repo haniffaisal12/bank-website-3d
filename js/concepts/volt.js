@@ -1,27 +1,8 @@
 /* Konsep volt — modul mandiri, dimuat oleh concepts/volt.html */
-import {$,AC,BGU,Box,CY,Cart,Cyl,EXRLoader,EffectComposer,GTAOPass,OutputPass,RBox,Reflector,RenderPass,RoundedBoxGeometry,ST,ShaderPass,Sky,Sph,T,TG,UnrealBloomPass,V,Water,brickHF,camera,canvas,clamp,ctex,dtex,emis,envCache,fbm,floorMat,glow,glowTex,hdri,hex2,leafGeo,leafMat,leafTexture,lerp,loadHdri,makeSky,mesh,noShadow,pbr,perfHF,physM,plankHF,pmrem,reduce,renderer,ridgeHF,rnd,rng,sstep,starField,stdM,sunDir,sunLight,tagSprite,textTex,tileHF,waterNormal,weaveHF,wetFloor,windowTex} from '../core.js';
+import {loadModel,$,AC,BGU,Box,CY,Cart,Cyl,EXRLoader,EffectComposer,GTAOPass,OutputPass,RBox,Reflector,RenderPass,RoundedBoxGeometry,ST,ShaderPass,Sky,Sph,T,TG,UnrealBloomPass,V,Water,brickHF,camera,canvas,clamp,ctex,dtex,emis,envCache,fbm,floorMat,glow,glowTex,hdri,hex2,leafGeo,leafMat,leafTexture,lerp,loadHdri,makeSky,mesh,noShadow,pbr,perfHF,physM,plankHF,pmrem,reduce,renderer,ridgeHF,rnd,rng,sstep,starField,stdM,sunDir,sunLight,tagSprite,textTex,tileHF,waterNormal,weaveHF,wetFloor,windowTex} from '../core.js';
 /* ==========================================================
    KONSEP 7 — VOLT : showroom mobil listrik, konfigurator langsung
    ========================================================== */
-function hermite(keys,x){if(x<=keys[0][0])return keys[0][1];for(let i=0;i<keys.length-1;i++){const a=keys[i],b=keys[i+1];if(x<=b[0]){const t=(x-a[0])/(b[0]-a[0]),s=t*t*(3-2*t);return a[1]+(b[1]-a[1])*s}}return keys[keys.length-1][1]}
-function loft(x0,x1,N,M,ring){
-  const pos=[],idx=[];
-  for(let i=0;i<=N;i++){const x=lerp(x0,x1,i/N);const r=ring(x,i/N);for(let j=0;j<M;j++)pos.push(x,r[j][1],r[j][0])}
-  const c0=pos.length/3;const ring0=ring(x0,0),ring1=ring(x1,1);
-  const avg=r=>[r.reduce((a,p)=>a+p[0],0)/r.length,r.reduce((a,p)=>a+p[1],0)/r.length];
-  const a0=avg(ring0),a1=avg(ring1);pos.push(x0,a0[1],a0[0],x1,a1[1],a1[0]);
-  for(let i=0;i<N;i++)for(let j=0;j<M;j++){const a=i*M+j,b=i*M+(j+1)%M,c=(i+1)*M+j,d=(i+1)*M+(j+1)%M;idx.push(a,c,b,b,c,d)}
-  for(let j=0;j<M;j++){idx.push(c0,j,(j+1)%M);const o=N*M;idx.push(c0+1,o+(j+1)%M,o+j)}
-  const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setIndex(idx);g.computeVertexNormals();return g}
-const sgn=(v,p)=>Math.sign(v)*Math.pow(Math.abs(v),p);
-function carBody(){
-  const L=2.35,belt=[[-L,.52],[-2.1,.8],[-1.6,.9],[-.4,.95],[.9,.93],[1.5,.84],[2.0,.7],[L,.46]];
-  return loft(-L,L,90,44,(x,u)=>{const top=hermite(belt,x),bot=.27+.06*Math.pow(Math.abs(x)/L,3),mid=(top+bot)/2,hh=(top-bot)/2;const nose=Math.pow(Math.max(0,1-Math.pow(Math.abs(x)/L,6)),.5);const w=.93*(1-.16*Math.pow(Math.abs(x)/L,3))*nose;const r=[];
-    for(let j=0;j<44;j++){const a=j/44*Math.PI*2,c=Math.cos(a),s=Math.sin(a);let z=w*sgn(c,2/2.7),y=mid+hh*sgn(s,2/2.7);r.push([z,y])}return r})}
-function carCabin(){
-  const roof=[[-1.65,.9],[-1.35,1.24],[-.6,1.42],[.3,1.4],[.75,1.2],[1.08,.94]],belt=[[-2.35,.52],[-2.1,.8],[-1.6,.9],[-.4,.95],[.9,.93],[1.5,.84],[2.35,.46]];
-  return loft(-1.65,1.08,60,36,(x)=>{const top=Math.max(hermite(roof,x),hermite(belt,x)+.01),bot=hermite(belt,x)-.02,mid=(top+bot)/2,hh=(top-bot)/2;const edge=Math.min(1,Math.min(x+1.65,1.08-x)*6);const r=[];
-    for(let j=0;j<36;j++){const a=j/36*Math.PI*2,c=Math.cos(a),s=Math.sin(a);const t=(s+1)/2;const w=(.84-.34*Math.pow(t,1.4))*Math.pow(Math.max(edge,.001),.5);r.push([w*sgn(c,.85),mid+hh*sgn(s,.85)])}return r})}
 function buildVolt(ui){
   const scene=new T.Scene();scene.background=new T.Color(0x060a14);scene.fog=new T.FogExp2(0x0a1220,.0085);
   scene.environment=hdri('studio');scene.environmentIntensity=.4;
@@ -65,34 +46,44 @@ function buildVolt(ui){
   const tt=Cyl(3.6,3.7,.3,stdM(0x0d0f14,{metalness:.85,roughness:.25}),0,.15,0,dock,64);
   const ttRing=mesh(new T.TorusGeometry(3.55,.05,8,96),ringM,0,.31,0,dock);ttRing.rotation.x=Math.PI/2;ttRing.castShadow=false;
   const ceilRing=mesh(new T.TorusGeometry(4.5,.09,10,96),new T.MeshBasicMaterial({color:new T.Color(3,3.2,3.6),toneMapped:false}),0,8.6,0,dock);ceilRing.rotation.x=Math.PI/2;ceilRing.castShadow=false;
-  [-1,1].forEach(s=>{const rl=new T.RectAreaLight(0xffffff,4,7,2.2);rl.position.set(s*9,4.2,CZ+1);rl.lookAt(CX,1,CZ);hall.add(rl);const b=Box(.05,2.2,7,new T.MeshBasicMaterial({color:new T.Color(.7,.75,.85),toneMapped:false}),s*9.2,4.2,CZ+1,hall);b.castShadow=false;b.rotation.y=0});
+  [-1,1].forEach(s=>{const rl=new T.RectAreaLight(0xffffff,4,7,2.2);rl.position.set(s*9,4.2,CZ+1);rl.lookAt(CX,1,CZ);hall.add(rl)});
   const spot=new T.SpotLight(0xffffff,70,20,.55,.7,2);spot.position.set(CX+2,9.5,CZ+2);spot.target.position.set(CX,.8,CZ);spot.castShadow=true;spot.shadow.mapSize.set(1024,1024);spot.shadow.bias=-.0003;hall.add(spot,spot.target);
   const ug=new T.PointLight(limeD,26,8,2);ug.position.set(CX,.5,CZ);hall.add(ug);
   // mobil
   const car=new T.Group();dock.add(car);car.position.y=.3;car.scale.setScalar(1.05);
   const paints=[[0xc4102c,'Merah Api'],[0xf3f4f6,'Putih Mutiara'],[0x0a1c4a,'Biru Malam'],[0x0d3a2b,'Hijau Hutan'],[0x8a9096,'Abu Titanium']];
-  const paint=new T.MeshPhysicalMaterial({color:paints[0][0],metalness:.55,roughness:.26,clearcoat:1,clearcoatRoughness:.03,envMapIntensity:1.4});
-  const glassCar=new T.MeshPhysicalMaterial({color:0x05080e,metalness:.9,roughness:.05,clearcoat:1,envMapIntensity:2});
-  const body=new T.Mesh(carBody(),paint);body.castShadow=body.receiveShadow=true;body.position.y=0;car.add(body);
-  const cabin=new T.Mesh(carCabin(),glassCar);cabin.castShadow=true;car.add(cabin);
-  const black=stdM(0x0a0b0e,{roughness:.35,metalness:.4});
-  [[1.42,.87],[1.42,-.87],[-1.42,.87],[-1.42,-.87]].forEach(w=>{const arch=Cyl(.44,.44,.3,black,w[0],.36,w[1]>0?.86:-.86,car,32);arch.rotation.x=Math.PI/2});
-  // roda
-  const tireM=pbr({fx:30,fy:2,oct:2,c0:0x101010,c1:0x262626,nS:3,r0:.85,r1:1,rep:[16,1],w:128});
-  const rimA=new T.MeshStandardMaterial({color:0xc9ced6,metalness:1,roughness:.22}),rimD=stdM(0x111317,{metalness:.9,roughness:.3});
-  const wheels=[];
-  [[1.42,1],[1.42,-1],[-1.42,1],[-1.42,-1]].forEach(w=>{const g=new T.Group();g.position.set(w[0],.36,w[1]*.86);const t=mesh(new T.TorusGeometry(.31,.1,20,48),tireM,0,0,0,g);
-    const aero=new T.Group(),sport=new T.Group();g.add(aero,sport);
-    const d=Cyl(.29,.29,.16,rimA,0,0,0,aero,40);d.rotation.x=Math.PI/2;const d2=Cyl(.18,.2,.02,rimD,0,0,w[1]*.09,aero,32);d2.rotation.x=Math.PI/2;
-    const hub=Cyl(.3,.3,.05,rimD,0,0,0,sport,32);hub.rotation.x=Math.PI/2;for(let i=0;i<5;i++){const sp=Box(.28,.07,.05,rimA,0,0,w[1]*.03,sport);sp.position.set(Math.cos(i*1.2566)*.15,Math.sin(i*1.2566)*.15,w[1]*.04);sp.rotation.z=i*1.2566}
-    const cal=Box(.16,.09,.04,new T.MeshStandardMaterial({color:0xd22,roughness:.4}),.12,-.05,w[1]*.07,sport);
-    const rimO=mesh(new T.TorusGeometry(.29,.02,8,48),rimA,0,0,0,sport);sport.visible=false;wheels.push({g,aero,sport})});
-  // lampu
+  const paint=new T.MeshPhysicalMaterial({color:paints[0][0],metalness:.55,roughness:.24,clearcoat:1,clearcoatRoughness:.025,envMapIntensity:1.4});
   const hlM=new T.MeshBasicMaterial({color:new T.Color(.25,.25,.28),toneMapped:false}),tlM=new T.MeshBasicMaterial({color:new T.Color(1.8,.1,.1),toneMapped:false});
-  const hl=Box(.06,.06,1.5,hlM,2.28,.62,0,car);hl.castShadow=false;[-1,1].forEach(s=>{const e=Box(.08,.05,.35,hlM,2.26,.6,s*.62,car);e.castShadow=false});
-  const tl=Box(.06,.07,1.6,tlM,-2.3,.72,0,car);tl.castShadow=false;
-  const badge=mesh(new T.PlaneGeometry(.4,.1),new T.MeshBasicMaterial({map:textTex('VOLT',256,64,{fg:'#fff'}),transparent:true,toneMapped:false,color:new T.Color(2,2.4,.6)}),2.31,.5,0,car);badge.rotation.y=Math.PI/2;badge.castShadow=false;
-  const ugStrip=Box(3.6,.02,.05,ringM,0,.24,.9,car);ugStrip.castShadow=false;Box(3.6,.02,.05,ringM,0,.24,-.9,car).castShadow=false;
+  const rimsAero=[],rimsSport=[];
+  // bodi mobil dibuat di Blender (blender/volt_car_v2.py) dan dimuat sebagai glTF
+  const MAP={
+    Cat:paint,
+    Kaca:new T.MeshPhysicalMaterial({color:0x04070c,metalness:.35,roughness:.04,clearcoat:1,envMapIntensity:2.2}),
+    Karet:stdM(0x0c0c0e,{roughness:.66}),
+    Velg:new T.MeshStandardMaterial({color:0xd6dae2,metalness:1,roughness:.2}),
+    Krom:new T.MeshStandardMaterial({color:0xeceef2,metalness:1,roughness:.12}),
+    CakramRem:new T.MeshStandardMaterial({color:0x55565a,metalness:1,roughness:.45}),
+    Kaliper:new T.MeshPhysicalMaterial({color:0xc81f26,roughness:.35,clearcoat:.5}),
+    HitamDoff:stdM(0x08080a,{roughness:.55}),
+    Trim:new T.MeshStandardMaterial({color:0x101014,metalness:.6,roughness:.28}),
+    LampuDRL:hlM,
+    LampuBelakang:tlM,
+    LensaLampu:new T.MeshPhysicalMaterial({color:0x06070a,roughness:.03,clearcoat:1,envMapIntensity:2}),
+    Celah:new T.MeshBasicMaterial({color:0x000000}),
+    Plat:stdM(0xe8e8e2,{roughness:.5}),
+    Kursi:stdM(0x8a7558,{roughness:.6}),
+    Layar:new T.MeshBasicMaterial({color:new T.Color(.3,.6,1)})
+  };
+  loadModel('volt_car').then(({scene:cm})=>{
+    cm.traverse(o=>{
+      if(!o.isMesh)return;
+      const nm=o.material&&o.material.name;if(MAP[nm])o.material=MAP[nm];
+      o.castShadow=nm!=='Celah'&&nm!=='LampuDRL';o.receiveShadow=true;
+      let p=o;while(p){if(p.name&&p.name.startsWith('VelgAero_')){rimsAero.push(o);break}if(p.name&&p.name.startsWith('VelgSport_')){rimsSport.push(o);break}p=p.parent}
+    });
+    rimsSport.forEach(o=>o.visible=false);
+    car.add(cm);scene.userData.aoDirty=true;
+  }).catch(e=>console.error('volt_car',e));
   const beams=[-1,1].map(s=>{const sp=new T.SpotLight(0xdfe8ff,0,26,.32,.6,2);sp.position.set(2.2,.66,s*.62);sp.target.position.set(9,.4,s*1.2);car.add(sp,sp.target);return sp});
   const cone=mesh(new T.ConeGeometry(2.2,7,24,1,true),new T.MeshBasicMaterial({color:0xbfd8ff,transparent:true,opacity:0,blending:T.AdditiveBlending,depthWrite:false,side:T.DoubleSide,toneMapped:false}),5.6,.6,0,car);cone.rotation.z=Math.PI/2;cone.castShadow=false;
   let pi=0,spin=1,lightsOn=false,cartN=0,rot=.5;const cart=Cart(ui);
@@ -101,13 +92,12 @@ function buildVolt(ui){
     update(t,dt,cam){
       plaza.tick(t);hfl.tick(t);
       rot+=dt*.25*spin;car.rotation.y=rot;dock.rotation.y=0;
-      wheels.forEach(w=>{w.g.children[0].rotation.z=0});
       const target=lightsOn?1:0;hlM.color.setScalar(lerp(.25,3.2,target));beams.forEach(b=>b.intensity=lerp(b.intensity,lightsOn?900:0,dt*6));cone.material.opacity=lerp(cone.material.opacity,lightsOn?.05:0,dt*6);
       if(cam){const ins=cam.position.z<-11;this.look.exp=ins?.8:.95}
     },
     actions:{
       paint(i){pi=i;paint.color.setHex(paints[i][0]);ui.stat('color',paints[i][1])},
-      rims(v){wheels.forEach(w=>{w.aero.visible=!v;w.sport.visible=v})},
+      rims(v){rimsAero.forEach(o=>o.visible=!v);rimsSport.forEach(o=>o.visible=v)},
       lights(v){lightsOn=v},
       spin(v){spin=v?0:1},
       cart(){cart('VOLT E-1 '+paints[pi][1],689000000)}

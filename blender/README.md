@@ -11,13 +11,22 @@ python blender/volt_car.py glb        # keluaran: blender/out/volt_car.glb
 
 Atau lewat Blender biasa: `blender -b -P blender/volt_car.py -- render`.
 
-`volt_car.py` membangun bodi VOLT E-1 dari penampang yang di-loft, memberi cat clearcoat, kaca, roda, dan lampu, lalu
-merender di studio dengan HDRI dari `assets/hdri/studio.exr`. Render 1280x720 dengan 96 sampel dan denoiser
-OpenImageDenoise butuh sekitar 2 menit di 4 inti CPU.
+`volt_car.py` membangun mobil VOLT E-1 dengan detail setingkat aset referensi (lihat `STUDI_CHANDELIER.md`):
+bodi di-loft dari penampang superellipse dengan kaca yang mengikuti garis jendela, lubang roda hasil boolean, celah panel
+yang diproyeksikan ke permukaan, gagang pintu, spion, lampu DRL dan lampu belakang, ban bertapak, dua model velg
+(Aero dan Sport), cakram rem, kaliper, dan interior sederhana. Hasilnya diekspor ke `assets/models/volt_car.glb`
+dan dimuat oleh `js/concepts/volt.js`, yang mengganti bahan berdasarkan nama (Cat, Kaca, Velg, dan seterusnya).
+
+```bash
+python blender/volt_car.py render --fast   # pratinjau cepat, sekitar 40 detik
+python blender/volt_car.py glb             # ekspor GLB
+cp blender/out/volt_car.glb assets/models/volt_car.glb
+```
+
+Render 1600x900 dengan 128 sampel dan denoiser OpenImageDenoise butuh beberapa menit di 4 inti CPU.
 
 ## Status
 
-Ini baru jalur kerjanya. Pencahayaan dan pantulan path tracing terlihat nyata, tetapi bentuk mobil hasil skrip masih
-kasar (proporsi, lengkung, dan velg belum meyakinkan), jadi GLB-nya belum dipakai di situs. Untuk hasil yang benar-benar
-fotorealistis, ganti bodi dengan model 3D berkualitas (misalnya file `.glb` berlisensi bebas atau buatan sendiri),
-lalu pakai skrip ini untuk pencahayaan, material, render poster, dan ekspor.
+Mobil sudah terbaca sebagai mobil dan detailnya lebih kaya daripada versi loft sebelumnya, tetapi proporsinya masih
+bergaya retro dan permukaannya belum sepresisi model studio. Untuk hasil setingkat foto, ganti bodi dengan model
+berkualitas dan pertahankan skrip ini untuk pencahayaan, material, dan ekspor.

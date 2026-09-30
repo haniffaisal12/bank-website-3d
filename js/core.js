@@ -55,11 +55,11 @@ function hdri(name){
 
 /* ---------- model glTF dari assets/models (dengan berkas .json opsional untuk metadata) ---------- */
 const modelCache={};
-async function loadModel(name){
+async function loadModel(name,opt){
   if(!modelCache[name]){
     modelCache[name]=(async()=>{
       const g=await new GLTFLoader().loadAsync(new URL('../assets/models/'+name+'.glb',import.meta.url).href);
-      let meta={};try{meta=await (await fetch(new URL('../assets/models/'+name+'.json',import.meta.url))).json()}catch(e){}
+      let meta={};if(opt&&opt.meta)try{meta=await (await fetch(new URL('../assets/models/'+name+'.json',import.meta.url))).json()}catch(e){}
       return{scene:g.scene,meta};
     })();
   }

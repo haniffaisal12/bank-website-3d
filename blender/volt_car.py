@@ -1,136 +1,347 @@
-"""VOLT E-1: bodi mobil, render Cycles, dan ekspor GLB.
-Jalankan:  python volt_car.py [render|glb|both] [warna_hex]
-Butuh paket `bpy` (pip install bpy) atau Blender: blender -b -P volt_car.py -- render
-"""
+"""VOLT E-1 — model mobil dengan detail setingkat aset referensi (lihat STUDI_CHANDELIER.md).
+  python volt_car.py render|glb|both [--fast]
+Pelajaran yang dipakai: siluet dipahat (bukan primitif), normal terbobot + sisi tajam ber-bevel, bagian berulang,
+kaca dan lampu sebagai bahan tersendiri, celah panel nyata, ban dengan tapak, velg berlapis."""
 import bpy,bmesh,math,sys,os
-from mathutils import Vector
+from mathutils import Vector,Matrix
+from mathutils.bvhtree import BVHTree
 HERE=os.path.dirname(os.path.abspath(__file__));OUT=os.path.join(HERE,'out');os.makedirs(OUT,exist_ok=True)
-MODE=sys.argv[1] if len(sys.argv)>1 and sys.argv[1] in('render','glb','both') else 'both'
-PAINT=int(sys.argv[2],16) if len(sys.argv)>2 else 0xB50F26
-
+MODE=next((a for a in sys.argv[1:] if a in('render','glb','both')),'both');FAST='--fast' in sys.argv
+def lin(c):
+    f=lambda u:u/12.92 if u<=.04045 else((u+.055)/1.055)**2.4
+    return (f((c>>16&255)/255),f((c>>8&255)/255),f((c&255)/255),1)
+def mat(name,color,metal=0,rough=.5,emit=None,es=0,coat=0,coatr=.05,trans=0,ior=1.45,alpha=1):
+    m=bpy.data.materials.new(name);m.use_nodes=True;b=m.node_tree.nodes['Principled BSDF']
+    b.inputs['Base Color'].default_value=color;b.inputs['Metallic'].default_value=metal;b.inputs['Roughness'].default_value=rough
+    b.inputs['Coat Weight'].default_value=coat;b.inputs['Coat Roughness'].default_value=coatr;b.inputs['IOR'].default_value=ior
+    if trans:b.inputs['Transmission Weight'].default_value=trans
+    if alpha<1:b.inputs['Alpha'].default_value=alpha
+    if emit:b.inputs['Emission Color'].default_value=emit;b.inputs['Emission Strength'].default_value=es
+    return m
+def smoothstep(a,b,x):
+    t=max(0,min(1,(x-a)/(b-a)));return t*t*(3-2*t)
 def herm(keys,x):
     if x<=keys[0][0]:return keys[0][1]
     for a,b in zip(keys,keys[1:]):
         if x<=b[0]:
-            t=(x-a[0])/(b[0]-a[0]);s=t*t*(3-2*t);return a[1]+(b[1]-a[1])*s
+            t=(x-a[0])/(b[0]-a[0]);return a[1]+(b[1]-a[1])*t*t*(3-2*t)
     return keys[-1][1]
-def sgn(v,p):return math.copysign(abs(v)**p,v)
-def srgb2lin(c):
-    r,g,b=[(c>>16&255)/255,(c>>8&255)/255,(c&255)/255]
-    f=lambda u:u/12.92 if u<=.04045 else((u+.055)/1.055)**2.4
-    return (f(r),f(g),f(b),1)
+def spline(keys,x):
+    # Catmull-Rom halus antar kunci
+    n=len(keys)
+    for i in range(n-1):
+        if x<=keys[i+1][0] or i==n-2:
+            p0=keys[max(i-1,0)];p1=keys[i];p2=keys[i+1];p3=keys[min(i+2,n-1)]
+            t=(x-p1[0])/(p2[0]-p1[0]);t=max(0,min(1,t))
+            return .5*((2*p1[1])+(-p0[1]+p2[1])*t+(2*p0[1]-5*p1[1]+4*p2[1]-p3[1])*t*t+(-p0[1]+3*p1[1]-3*p2[1]+p3[1])*t**3)
+def link(ob,parent=None):
+    if ob.name not in bpy.context.collection.objects:bpy.context.collection.objects.link(ob)
+    if parent:ob.parent=parent
+    return ob
+def smooth(ob):
+    for p in ob.data.polygons:p.use_smooth=True
+def bevel_wn(ob,width=.006,seg=2,angle=40):
+    b=ob.modifiers.new('bevel','BEVEL');b.width=width;b.segments=seg;b.limit_method='ANGLE';b.angle_limit=math.radians(angle);b.harden_normals=True
+    w=ob.modifiers.new('wn','WEIGHTED_NORMAL');w.keep_sharp=True
+    if hasattr(ob.data,'use_auto_smooth'):ob.data.use_auto_smooth=True
 
-def loft(x0,x1,N,M,ring,name):
-    me=bpy.data.meshes.new(name);bm=bmesh.new();rows=[]
+def RBox(w,h,d,r,material,loc):
+    bpy.ops.mesh.primitive_cube_add(size=1,location=loc);o=bpy.context.object;o.scale=(w,h,d)
+    o.data.materials.append(material)
+    b=o.modifiers.new('bev','BEVEL');b.width=r;b.segments=3;b.limit_method='NONE'
+    smooth(o);return o
+
+# ================= bodi =================
+XF,XR=2.36,-2.36
+TOP=[(XR,.90),(-2.28,.99),(-2.05,1.07),(-1.7,1.22),(-1.2,1.35),(-.6,1.42),(-.05,1.44),(.35,1.38),(.72,1.20),(1.08,1.02),(1.45,.97),(1.85,.92),(2.2,.85),(XF,.74)]
+BOT=[(XR,.44),(-2.2,.31),(-1.7,.25),(1.7,.25),(2.15,.28),(XF,.36)]
+WID=[(XR,.72),(-2.1,.88),(-1.5,.955),(-.5,.965),(.5,.965),(1.5,.95),(2.1,.90),(XF,.76)]
+BELT=lambda x:.985+.015*math.sin(x*1.3)
+def cabin_mask(x):return smoothstep(-2.05,-1.8,x)*(1-smoothstep(.72,1.12,x))
+N1,N2,N3=16,12,8            # jumlah segmen: badan bawah, jendela, atap
+K=N1+N2+N3
+def sv_lohi(x):
+    t=spline(TOP,x);bt=spline(BOT,x);h=t-bt
+    return (BELT(x)+.012-bt)/h,(t-bt-.085)/h
+def svs_for(x):
+    lo,hi=sv_lohi(x);lo=max(.35,min(.7,lo));hi=max(lo+.1,min(.97,hi))
+    a=[lo*(i/N1)**1.0 for i in range(N1)]
+    b=[lo+(hi-lo)*(i/N2) for i in range(N2)]
+    c=[hi+(1-hi)*(i/N3) for i in range(N3+1)]
+    return a+b+c
+def pt_at(x,sv,side):
+    t=spline(TOP,x);b=spline(BOT,x);w=spline(WID,x);cm=cabin_mask(x)
+    sn=2*sv-1;c=side*math.sqrt(max(0,1-sn*sn))
+    if sv<.5:wf=1-.085*(1-sv/.5)**2
+    else:
+        k=(sv-.5)/.5;wf=1-(.36*cm+.16*(1-cm))*k**1.8
+    e=2/(2.4+.9*cm)
+    return (w*wf*math.copysign(abs(c)**e,c) if c!=0 else 0.0, b+(t-b)*sv)
+def body_ring(x):
+    svs=svs_for(x)
+    right=[pt_at(x,sv,1) for sv in svs]
+    left=[pt_at(x,sv,-1) for sv in reversed(svs[1:-1])]
+    return right+left
+def make_body():
+    N=200;M=2*K;me=bpy.data.meshes.new('Bodi');bm=bmesh.new();rows=[]
     for i in range(N+1):
-        x=x0+(x1-x0)*i/N;pts=ring(x)
-        rows.append([bm.verts.new((x,z,y)) for (z,y) in pts])   # blender: X maju, Y lebar, Z tinggi
+        x=XR+(XF-XR)*i/N;pts=body_ring(x)
+        rows.append([bm.verts.new((x,y,z)) for (y,z) in pts])
+    mats=[]
     for i in range(N):
+        xm=XR+(XF-XR)*(i+.5)/N
         for j in range(M):
-            bm.faces.new((rows[i][j],rows[i+1][j],rows[i+1][(j+1)%M],rows[i][(j+1)%M]))
-    for end,rev in((0,True),(N,False)):
-        f=bm.faces.new(rows[end][::-1] if rev else rows[end])
+            f=bm.faces.new((rows[i][j],rows[i][(j+1)%M],rows[i+1][(j+1)%M],rows[i+1][j]))
+            seg=j if j<K else (2*K-1-j)         # indeks segmen ketinggian (0..K-1) di sisi kiri/kanan
+            g=False
+            wind=(.40<xm<1.12) or (-2.10<xm<-1.62)
+            if wind and seg>=N1:g=True
+            if (-1.62<=xm<=.40) and N1<=seg<N1+N2 and not(-.36<xm<-.24):g=True
+            f.material_index=1 if g else 0
+    for end in(0,N):
+        vs=rows[end];c=sum((v.co for v in vs),Vector())/len(vs);cv=bm.verts.new(c)
+        for j in range(M):
+            f=bm.faces.new((cv,vs[(j+1)%M],vs[j]) if end==0 else (cv,vs[j],vs[(j+1)%M]));f.material_index=0
     bmesh.ops.recalc_face_normals(bm,faces=bm.faces)
     bm.to_mesh(me);bm.free()
-    ob=bpy.data.objects.new(name,me);bpy.context.collection.objects.link(ob)
-    for p in me.polygons:p.use_smooth=True
+    ob=link(bpy.data.objects.new('Bodi',me));smooth(ob)
     return ob
 
-L=2.35
-belt=[(-L,.52),(-2.1,.8),(-1.6,.9),(-.4,.95),(.9,.93),(1.5,.84),(2.0,.7),(L,.46)]
-def body_ring(x):
-    top=herm(belt,x);bot=.27+.06*(abs(x)/L)**3;mid=(top+bot)/2;hh=(top-bot)/2
-    nose=max(0,1-(abs(x)/L)**6)**.5;w=.93*(1-.16*(abs(x)/L)**3)*nose;pts=[]
-    for j in range(48):
-        a=j/48*math.tau;pts.append((w*sgn(math.cos(a),2/2.7),mid+hh*sgn(math.sin(a),2/2.7)))
-    return pts
-roof=[(-1.65,.9),(-1.35,1.24),(-.6,1.42),(.3,1.4),(.75,1.2),(1.08,.94)]
-def cabin_ring(x):
-    top=max(herm(roof,x),herm(belt,x)+.01);bot=herm(belt,x)-.02;mid=(top+bot)/2;hh=(top-bot)/2
-    edge=min(1,min(x+1.65,1.08-x)*6);pts=[]
-    for j in range(40):
-        a=j/40*math.tau;c,s=math.cos(a),math.sin(a);t=(s+1)/2
-        w=(.84-.34*t**1.4)*max(edge,.001)**.5;pts.append((w*sgn(c,.85),mid+hh*sgn(s,.85)))
-    return pts
+# ================= roda =================
+WB=1.43;WR=.35;TRACK=.885
+def make_tire():
+    NT=120;NP=40;me=bpy.data.meshes.new('Ban');bm=bmesh.new();rows=[]
+    W=.245;Rr=.185   # lebar, jari-jari velg
+    for i in range(NT):
+        th=i/NT*math.tau;groove=1 if(int(i/NT*46)%2==0) else 0;row=[]
+        for j in range(NP):
+            ph=j/NP*math.tau;c=math.cos(ph);s=math.sin(ph)
+            # penampang: sisi bulat dengan bahu; tapak di ph~0
+            y=(W/2)*math.copysign(abs(s)**.8,s)          # lebar (sumbu roda)
+            r=Rr+(WR-Rr)*(.5+.5*math.copysign(abs(c)**.6,c))
+            if c>.55 and abs(s)<.72:r-=.0035*groove*smoothstep(.55,.7,c)  # alur tapak
+            if abs(s)>.97 and c<.5:r=Rr+(WR-Rr)*.5*(1+c)+.0     # sisi dalam
+            row.append(bm.verts.new((math.cos(th)*r,y,math.sin(th)*r)))
+        rows.append(row)
+    for i in range(NT):
+        for j in range(NP):
+            bm.faces.new((rows[i][j],rows[i][(j+1)%NP],rows[(i+1)%NT][(j+1)%NP],rows[(i+1)%NT][j]))
+    bmesh.ops.recalc_face_normals(bm,faces=bm.faces);bm.to_mesh(me);bm.free()
+    ob=link(bpy.data.objects.new('Ban',me));smooth(ob);return ob
+def lathe(name,prof,seg=64):
+    me=bpy.data.meshes.new(name);bm=bmesh.new();rows=[]
+    for i in range(seg):
+        th=i/seg*math.tau;rows.append([bm.verts.new((math.cos(th)*r,y,math.sin(th)*r)) for (r,y) in prof])
+    for i in range(seg):
+        for j in range(len(prof)-1):
+            bm.faces.new((rows[i][j],rows[i][j+1],rows[(i+1)%seg][j+1],rows[(i+1)%seg][j]))
+    bmesh.ops.recalc_face_normals(bm,faces=bm.faces);bm.to_mesh(me);bm.free()
+    ob=link(bpy.data.objects.new(name,me));smooth(ob);return ob
+def poly_extrude(name,pts2d,depth,y0):
+    me=bpy.data.meshes.new(name);bm=bmesh.new()
+    v0=[bm.verts.new((x,y0,z)) for x,z in pts2d];v1=[bm.verts.new((x,y0+depth,z)) for x,z in pts2d]
+    bm.faces.new(v0[::-1]);bm.faces.new(v1)
+    n=len(v0)
+    for i in range(n):bm.faces.new((v0[i],v0[(i+1)%n],v1[(i+1)%n],v1[i]))
+    bmesh.ops.recalc_face_normals(bm,faces=bm.faces);bm.to_mesh(me);bm.free()
+    return link(bpy.data.objects.new(name,me))
+def rim_sport():
+    parts=[]
+    barrel=lathe('VelgLaras',[(.185,-.12),(.19,-.10),(.19,-.02),(.178,0),(.178,.06),(.19,.085),(.22,.1),(.222,.115),(.20,.12),(.185,.11)],72)
+    parts.append(barrel)
+    # 10 jari-jari ganda
+    for k in range(10):
+        a=k*math.tau/10;w0=.020
+        prof=[(.05,-w0),(.19,-w0*1.3),(.19,w0*1.3),(.05,w0)]
+        pts=[(r*math.cos(a)-yy*math.sin(a)*1,r*math.sin(a)+yy*math.cos(a)) for (r,yy) in prof]
+        sp=poly_extrude('Jari%d'%k,pts,.045,.04);bevel_wn(sp,.004,2,30);parts.append(sp)
+    hub=lathe('Hub',[(.001,.04),(.06,.04),(.066,.07),(.05,.085),(.001,.09)],32);parts.append(hub)
+    return parts
+def rim_aero():
+    parts=[]
+    barrel=lathe('VelgAeroBarrel',[(.185,-.12),(.19,-.10),(.19,-.02),(.178,0),(.178,.06),(.19,.085),(.22,.1),(.222,.115),(.20,.12),(.185,.11)],72);parts.append(barrel)
+    # cakram dengan 5 celah aerodinamis (dibuat dari 5 bilah lebar)
+    for k in range(5):
+        a=k*math.tau/5;prof=[]
+        for t in range(0,13):
+            u=t/12;r0=.05+(.185-.05)*u;wid=(.31-.1*u)*.5;prof.append((r0,wid))
+        up=[(r*math.cos(a+w)-0,r*math.sin(a+w)) for r,w in prof];dn=[(r*math.cos(a-w),r*math.sin(a-w)) for r,w in prof[::-1]]
+        # bilah = wedge antar dua kurva sudut
+        pts=[(r*math.cos(a+w),r*math.sin(a+w)) for r,w in prof]+[(r*math.cos(a-w),r*math.sin(a-w)) for r,w in prof[::-1]]
+        pts=[(p[0],p[1]) for p in pts]
+        bl=poly_extrude('Bilah%d'%k,pts,.03,.05);bevel_wn(bl,.003,2,30);parts.append(bl)
+    cap=lathe('CapAero',[(.001,.04),(.06,.045),(.07,.07),(.001,.08)],32);parts.append(cap)
+    return parts
+def make_wheel_set(mats):
+    tire=make_tire();tire.data.materials.append(mats['rubber'])
+    disc=lathe('Cakram',[(.04,-.03),(.15,-.03),(.155,-.055),(.16,-.075),(.09,-.075),(.09,-.06),(.04,-.06)],64);disc.data.materials.append(mats['brake'])
+    cal=poly_extrude('Kaliper',[(-.11,.11),(.11,.11),(.14,.03),(.14,-.03),(.11,-.11),(-.11,-.11)] if False else [(.03,.10),(.16,.07),(.17,-.05),(.14,-.13),(.03,-.10)],.07,-.10);cal.data.materials.append(mats['caliper']);bevel_wn(cal,.008,3,30)
+    sport=rim_sport();aero=rim_aero()
+    for p in sport+aero:p.data.materials.append(mats['rim'])
+    # nut
+    nuts=[]
+    for k in range(5):
+        a=k*math.tau/5;n=lathe('Baut',[(.001,.09),(.012,.09),(.012,.1),(.001,.1)],6);n.location=(math.cos(a)*.08,0,math.sin(a)*.08);n.data.materials.append(mats['chrome']);nuts.append(n)
+    return dict(tire=tire,disc=disc,cal=cal,sport=sport,aero=aero,nuts=nuts)
 
-def clear_scene():
-    bpy.ops.wm.read_factory_settings(use_empty=True)
-def mat_principled(name,color,metal=0,rough=.5,**kw):
-    m=bpy.data.materials.new(name);m.use_nodes=True;b=m.node_tree.nodes['Principled BSDF']
-    b.inputs['Base Color'].default_value=color;b.inputs['Metallic'].default_value=metal;b.inputs['Roughness'].default_value=rough
-    for k,v in kw.items():
-        if k in b.inputs:b.inputs[k].default_value=v
-    return m
+# ================= detail bodi =================
+def boolean_diff(ob,cutter,exact=False):
+    m=ob.modifiers.new('cut','BOOLEAN');m.operation='DIFFERENCE';m.object=cutter;m.solver='EXACT'
+    bpy.context.view_layer.objects.active=ob
+    bpy.ops.object.select_all(action='DESELECT');ob.select_set(True)
+    bpy.ops.object.modifier_apply(modifier='cut')
+def cyl_obj(name,r,depth,loc,axis='Y'):
+    bpy.ops.mesh.primitive_cylinder_add(radius=r,depth=depth,vertices=96,location=loc,rotation=(math.pi/2,0,0) if axis=='Y' else (0,0,0))
+    o=bpy.context.object;o.name=name;return o
+def project_line(bvh,pts,side=1,off=.0015):
+    """titik (x,z) diproyeksikan ke permukaan bodi sepanjang sumbu Y; kembalikan daftar Vector di permukaan."""
+    out=[]
+    for (x,z) in pts:
+        o=Vector((x,side*3,z));d=Vector((0,-side,0))
+        hit=bvh.ray_cast(o,d)
+        if hit[0] is not None:out.append(hit[0]+hit[1]*off)
+    return out
+def tube(name,pts,r,material,cyclic=False):
+    cu=bpy.data.curves.new(name,'CURVE');cu.dimensions='3D';cu.bevel_depth=r;cu.bevel_resolution=2;cu.fill_mode='FULL'
+    sp=cu.splines.new('POLY');sp.points.add(len(pts)-1)
+    for p,v in zip(sp.points,pts):p.co=(v.x,v.y,v.z,1)
+    sp.use_cyclic_u=cyclic
+    ob=bpy.data.objects.new(name,cu);link(ob);ob.data.materials.append(material);return ob
 
-def build_car(paint):
-    car=bpy.data.objects.new('VOLT_E1',None);bpy.context.collection.objects.link(car)
-    pm=mat_principled('Cat',srgb2lin(paint),metal=.6,rough=.28,**{'Coat Weight':1.0,'Coat Roughness':.03})
-    gm=mat_principled('Kaca',(.01,.012,.018,1),metal=.2,rough=.03,**{'Coat Weight':1.0})
-    black=mat_principled('Karet',(.012,.012,.014,1),rough=.55)
-    chrome=mat_principled('Krom',(.9,.9,.92,1),metal=1,rough=.15)
-    rimM=mat_principled('Velg',(.75,.77,.8,1),metal=1,rough=.22)
-    lamp=mat_principled('Lampu',(1,1,1,1),rough=.1);lamp.node_tree.nodes['Principled BSDF'].inputs['Emission Color'].default_value=(.85,.9,1,1);lamp.node_tree.nodes['Principled BSDF'].inputs['Emission Strength'].default_value=6
-    tail=mat_principled('LampuBelakang',(.5,0,0,1),rough=.2);tail.node_tree.nodes['Principled BSDF'].inputs['Emission Color'].default_value=(1,.02,.02,1);tail.node_tree.nodes['Principled BSDF'].inputs['Emission Strength'].default_value=8
-    body=loft(-L,L,120,48,body_ring,'Bodi');body.data.materials.append(pm)
-    cab=loft(-1.65,1.08,80,40,cabin_ring,'Kabin');cab.data.materials.append(gm)
-    for ob in(body,cab):
-        ob.parent=car
-        sm=ob.modifiers.new('sub','SUBSURF');sm.levels=1;sm.render_levels=2
-    # sil/rocker
-    bpy.ops.mesh.primitive_cube_add(size=1,location=(0,0,.29));sk=bpy.context.object;sk.scale=(2.15,.9,.05);sk.data.materials.append(black);sk.parent=car;sk.name='Sill'
+def build(paint_color):
+    root=bpy.data.objects.new('VOLT_E1',None);link(root)
+    M={}
+    M['paint']=mat('Cat',lin(paint_color),metal=.55,rough=.24,coat=1.0,coatr=.025)
+    M['glass']=mat('Kaca',(.012,.014,.02,1),metal=.0,rough=.02,coat=1.0,coatr=.0)
+    M['rubber']=mat('Karet',(.014,.014,.016,1),rough=.62)
+    M['rim']=mat('Velg',(.82,.84,.88,1),metal=1,rough=.2)
+    M['chrome']=mat('Krom',(.9,.9,.93,1),metal=1,rough=.12)
+    M['brake']=mat('CakramRem',(.32,.32,.34,1),metal=1,rough=.45)
+    M['caliper']=mat('Kaliper',lin(0xd21f26),metal=.2,rough=.35,coat=.5)
+    M['black']=mat('HitamDoff',(.02,.02,.022,1),rough=.55)
+    M['trim']=mat('Trim',(.03,.03,.035,1),metal=.6,rough=.28)
+    M['drl']=mat('LampuDRL',(1,1,1,1),rough=.1,emit=(.9,.95,1,1),es=30)
+    M['tail']=mat('LampuBelakang',(.3,0,0,1),rough=.15,emit=(1,.03,.03,1),es=14)
+    M['lens']=mat('LensaLampu',(.02,.02,.025,1),rough=.02,coat=1.0,coatr=.0)
+    M['seam']=mat('Celah',(0,0,0,1),rough=.9)
+    M['plate']=mat('Plat',(.9,.9,.88,1),rough=.5)
+    M['leather']=mat('Kursi',(.55,.47,.36,1),rough=.6)
+    M['dash']=mat('Dasbor',(.03,.03,.03,1),rough=.5)
+    body=make_body();body.data.materials.append(M['paint']);body.data.materials.append(M['glass']);body.parent=root
+    # lubang roda (boolean) + liner
+    for (x,s) in((WB,1),(WB,-1),(-WB,1),(-WB,-1)):
+        c=cyl_obj('arch',WR+.075,.42,(x,s*(TRACK+.02),WR));boolean_diff(body,c);bpy.data.objects.remove(c)
+    bvh_ob=body
+    dg=bpy.context.evaluated_depsgraph_get();ev=body.evaluated_get(dg);bvh=BVHTree.FromObject(body,dg)
+    # celah panel di sisi kiri dan kanan
+    for side in(1,-1):
+        lines=[
+            [(1.02,.30),(1.03,.55),(1.00,.80),(.86,.99)],            # tepi depan pintu depan
+            [(-.30,.30),(-.31,.60),(-.33,.99)],                       # antara pintu depan/belakang
+            [(-1.32,.31),(-1.36,.60),(-1.33,.99)],                    # tepi belakang pintu belakang
+            [(1.02,.30),(.2,.27),(-.6,.27),(-1.32,.31)],              # garis sill
+        ]
+        for i,l in enumerate(lines):
+            pts=project_line(bvh,l,side,.001)
+            if len(pts)>=2:tube('Celah%d_%d'%(i,side),pts,.0022,M['seam']).parent=root
+        # gagang pintu rata
+        for (hx,hz) in((.42,.90),(-.85,.90)):
+            p0=project_line(bvh,[(hx-.09,hz),(hx+.09,hz)],side,.004)
+            if len(p0)==2:tube('Gagang',p0,.009,M['trim']).parent=root
+        # spion
+        p=project_line(bvh,[(1.0,.99)],side,.03)
+        if p:
+            mir=RBox(.10,.18,.09,.03,M['paint'],(p[0].x,p[0].y+side*.06,p[0].z+.04));mir.parent=root
+    # celah kap mesin dan bagasi
+    hood=[(1.0,.93)]  # placeholder
+    # lampu depan: strip DRL + lensa
+    for side in(1,-1):
+        hp=[(2.05,.70),(2.18,.72),(2.3,.68)]
+        ps=[]
+        for (x,z) in [(2.10,.71),(2.02,.74),(1.90,.78),(1.75,.815)]:
+            o=Vector((x,side*.9,z+.6));h=bvh.ray_cast(o,Vector((0,0,-1)))
+            if h[0] is None:continue
+            ps.append(h[0]+h[1]*.003)
+        # jalur lampu di ujung depan: garis y dari tengah ke sisi pada x tetap
+    # strip DRL melintang depan (di ujung depan bodi, proyeksi sumbu X)
+    def proj_x(ys,z,off=.003,sx=1):
+        out=[]
+        for y in ys:
+            h=bvh.ray_cast(Vector((4,y,z)),Vector((-1,0,0)))
+            if h[0] is not None:out.append(h[0]+h[1]*off)
+        return out
+    ys=[i*.05 for i in range(-17,18)]
+    drl=proj_x(ys,.70);tube('DRL',drl,.011,M['drl']).parent=root
+    lens_l=proj_x([i*.03 for i in range(6,30)],.66,.002);lens_r=proj_x([-i*.03 for i in range(6,30)],.66,.002)
+    for l in(lens_l,lens_r):
+        if len(l)>2:tube('Lensa',l,.026,M['lens']).parent=root
+    # lampu belakang: bar penuh
+    def proj_xr(ys,z,off=.003):
+        out=[]
+        for y in ys:
+            h=bvh.ray_cast(Vector((-4,y,z)),Vector((1,0,0)))
+            if h[0] is not None:out.append(h[0]+h[1]*off)
+        return out
+    tail=proj_xr([i*.05 for i in range(-17,18)],1.00);tube('LampuBelakang',tail,.014,M['tail']).parent=root
+    tl=proj_xr([i*.05 for i in range(-17,18)],.60);tube('DiffuserGaris',tl,.006,M['trim']).parent=root
+    # plat nomor
+    pl=RBox(.03,.52,.13,.01,M['plate'],(-2.36,0,.58));pl.parent=root
+    # sill dan difuser
+    # atap panorama (sedikit lebih terang) tidak dipakai
+    # interior sederhana terlihat lewat kaca
+    for x in(.2,-.7):
+        for y in(-.4,.4):
+            seat=RBox(.5,.5,.14,.06,M['leather'],(x,y,.55));seat.parent=root
+            back=RBox(.14,.5,.55,.06,M['leather'],(x-.26,y,.85));back.parent=root;back.rotation_euler=(0,-.2,0)
     # roda
-    for (x,s) in((1.42,1),(1.42,-1),(-1.42,1),(-1.42,-1)):
-        bpy.ops.mesh.primitive_torus_add(major_radius=.28,minor_radius=.11,major_segments=64,minor_segments=24,location=(x,s*.86,.36),rotation=(math.pi/2,0,0))
-        t=bpy.context.object;t.data.materials.append(black);t.parent=car;t.name='Ban'
-        for p in t.data.polygons:p.use_smooth=True
-        bpy.ops.mesh.primitive_cylinder_add(radius=.29,depth=.14,vertices=64,location=(x,s*.86,.36),rotation=(math.pi/2,0,0))
-        d=bpy.context.object;d.data.materials.append(rimM);d.parent=car;d.name='VelgDisk'
-        bev=d.modifiers.new('bev','BEVEL');bev.width=.012;bev.segments=3
-        for k in range(5):
-            a=k*math.tau/5
-            bpy.ops.mesh.primitive_cube_add(size=1,location=(x,s*.86+s*.075,.36+math.sin(a)*.14),rotation=(0,0,0));sp=bpy.context.object
-            sp.location=(x+math.cos(a)*.0,s*.86+s*.075,.36);sp.scale=(.045,.03,.25);sp.rotation_euler=(0,a,0);sp.data.materials.append(chrome);sp.parent=car
-    # lampu
-    bpy.ops.mesh.primitive_cube_add(size=1,location=(2.27,0,.62));h=bpy.context.object;h.scale=(.03,1.5,.035);h.data.materials.append(lamp);h.parent=car;h.name='LampuDepan'
-    for s in(-1,1):
-        bpy.ops.mesh.primitive_cube_add(size=1,location=(2.24,s*.62,.6));e=bpy.context.object;e.scale=(.05,.32,.04);e.data.materials.append(lamp);e.parent=car
-    bpy.ops.mesh.primitive_cube_add(size=1,location=(-2.3,0,.72));t=bpy.context.object;t.scale=(.03,1.55,.04);t.data.materials.append(tail);t.parent=car;t.name='LampuBelakang'
-    return car
+    wheels=[]
+    ws=make_wheel_set(M)
+    def place(objs,loc,rot_z):
+        for o in objs:
+            o.rotation_euler[2]=rot_z if rot_z else 0
+            o.location=Vector(loc)
+    templ=[ws['tire'],ws['disc'],ws['cal']]+ws['sport']+ws['aero']+ws['nuts']
+    names={}
+    for k,(x,s) in enumerate(((WB,1),(WB,-1),(-WB,1),(-WB,-1))):
+        grp=bpy.data.objects.new('Roda%d'%k,None);link(grp,root)
+        grp.location=(x,s*TRACK,WR)
+        if s<0:grp.rotation_euler=(0,0,math.pi)
+        # untuk sisi kanan, rotasi 180° pada Z sudah membalik x,y; koordinat lokal tetap +y = luar
+        for o in templ:
+            c=o.copy();c.data=o.data;link(c,grp);c.location=o.location.copy() if hasattr(o,'location') else (0,0,0)
+            if o in ws['aero']:c.name='VelgAero_'+c.name
+            if o in ws['sport']:c.name='VelgSport_'+c.name
+        wheels.append(grp)
+    for o in templ:bpy.data.objects.remove(o)
+    return root,M
 
+# ================= studio dan render =================
 def studio(hdri):
-    w=bpy.data.worlds.new('W');bpy.context.scene.world=w;w.use_nodes=True
-    n=w.node_tree.nodes;l=w.node_tree.links;n.clear()
-    tex=n.new('ShaderNodeTexEnvironment');tex.image=bpy.data.images.load(hdri)
-    bg=n.new('ShaderNodeBackground');bg.inputs['Strength'].default_value=.8;out=n.new('ShaderNodeOutputWorld')
+    w=bpy.data.worlds.new('W');bpy.context.scene.world=w;w.use_nodes=True;n=w.node_tree.nodes;l=w.node_tree.links;n.clear()
+    tex=n.new('ShaderNodeTexEnvironment');tex.image=bpy.data.images.load(hdri);bg=n.new('ShaderNodeBackground');bg.inputs['Strength'].default_value=.55;out=n.new('ShaderNodeOutputWorld')
     l.new(tex.outputs['Color'],bg.inputs['Color']);l.new(bg.outputs['Background'],out.inputs['Surface'])
-    # lantai
-    bpy.ops.mesh.primitive_circle_add(vertices=128,radius=40,fill_type='NGON',location=(0,0,0));f=bpy.context.object
-    fm=mat_principled('Lantai',(.02,.022,.028,1),metal=.1,rough=.12);f.data.materials.append(fm)
-    # lampu area softbox
-    for (loc,rot,sz,en,col) in [((-4,-5,4),(1.1,0,-.6),4,900,(1,1,1)),((5,-3,3),(1.2,0,.8),3,500,(.85,.92,1)),((0,0,6),(0,0,0),5,300,(1,1,1))]:
-        bpy.ops.object.light_add(type='AREA',location=loc,rotation=rot);a=bpy.context.object;a.data.size=sz;a.data.energy=en;a.data.color=col
-    bpy.ops.mesh.primitive_torus_add(major_radius=3.3,minor_radius=.035,major_segments=128,minor_segments=8,location=(0,0,.02))
-    ring=bpy.context.object;rm=bpy.data.materials.new('Cincin');rm.use_nodes=True;b=rm.node_tree.nodes['Principled BSDF'];b.inputs['Emission Color'].default_value=(.85,1,.15,1);b.inputs['Emission Strength'].default_value=10;b.inputs['Base Color'].default_value=(0,0,0,1);ring.data.materials.append(rm)
-
-def render(path,res=(1280,720),samples=96,cam=((6.2,-5.4,1.3),(0,0,.55)),lens=42):
-    sc=bpy.context.scene;sc.render.engine='CYCLES'
-    prefs=sc.cycles;prefs.samples=samples;prefs.use_denoising=True;prefs.denoiser='OPENIMAGEDENOISE';prefs.device='CPU'
-    prefs.max_bounces=8;prefs.glossy_bounces=6;prefs.caustics_reflective=False;prefs.caustics_refractive=False
-    sc.render.resolution_x,sc.render.resolution_y=res;sc.render.resolution_percentage=100
-    sc.view_settings.view_transform='AgX';sc.view_settings.look='AgX - Medium High Contrast'
-    bpy.ops.object.camera_add(location=cam[0]);c=bpy.context.object;c.data.lens=lens;c.data.dof.use_dof=True;c.data.dof.aperture_fstop=5.6
-    d=c.constraints.new('TRACK_TO');empty=bpy.data.objects.new('t',None);empty.location=cam[1];bpy.context.collection.objects.link(empty)
-    d.target=empty;d.track_axis='TRACK_NEGATIVE_Z';d.up_axis='UP_Y';c.data.dof.focus_object=empty
-    sc.camera=c;sc.render.filepath=path;sc.render.image_settings.file_format='JPEG';sc.render.image_settings.quality=90
-    bpy.ops.render.render(write_still=True)
-
-clear_scene()
-car=build_car(PAINT)
+    bpy.ops.mesh.primitive_circle_add(vertices=128,radius=60,fill_type='NGON',location=(0,0,0));f=bpy.context.object
+    f.data.materials.append(mat('Lantai',(.018,.02,.026,1),metal=.05,rough=.14))
+    for (loc,rot,sz,en) in [((-5,-6,4.5),(1.1,0,-.6),5,2200),((6,-4,3),(1.2,0,.9),4,1300),((0,4,5),(0,0,0),6,900),((-6,5,2.5),(1.3,0,-2.4),3,900)]:
+        bpy.ops.object.light_add(type='AREA',location=loc,rotation=rot);a=bpy.context.object;a.data.size=sz;a.data.energy=en
+    bpy.ops.mesh.primitive_torus_add(major_radius=3.6,minor_radius=.04,major_segments=160,minor_segments=8,location=(0,0,.02))
+    r=bpy.context.object;r.data.materials.append(mat('Cincin',(0,0,0,1),emit=(.85,1,.15,1),es=8))
+def render(path,cam,tgt,res,samples,lens=45):
+    sc=bpy.context.scene;sc.render.engine='CYCLES';c=sc.cycles;c.samples=samples;c.use_denoising=True;c.denoiser='OPENIMAGEDENOISE';c.device='CPU'
+    c.max_bounces=8;c.glossy_bounces=6;c.transmission_bounces=6;c.caustics_reflective=False;c.caustics_refractive=False
+    sc.render.resolution_x,sc.render.resolution_y=res;sc.view_settings.view_transform='AgX';sc.view_settings.look='AgX - Medium High Contrast'
+    bpy.ops.object.camera_add(location=cam);cm=bpy.context.object;cm.data.lens=lens
+    t=cm.constraints.new('TRACK_TO');e=bpy.data.objects.new('t',None);e.location=tgt;bpy.context.collection.objects.link(e);t.target=e;t.track_axis='TRACK_NEGATIVE_Z';t.up_axis='UP_Y'
+    sc.camera=cm;sc.render.filepath=path;sc.render.image_settings.file_format='JPEG';sc.render.image_settings.quality=90;bpy.ops.render.render(write_still=True)
+bpy.ops.wm.read_factory_settings(use_empty=True)
+root,M=build(0xB50F26)
 if MODE in('render','both'):
     studio(os.path.join(HERE,'..','assets','hdri','studio.exr'))
-    render(os.path.join(OUT,'volt_render.jpg'))
+    res=(960,540) if FAST else (1600,900);sm=32 if FAST else 128
+    render(os.path.join(OUT,'volt_v2_3q.jpg'),(6.2,-5.6,1.5),(0,0,.6),res,sm)
+    render(os.path.join(OUT,'volt_v2_side.jpg'),(0,-7.5,.75),(0,0,.7),res,sm,lens=55)
 if MODE in('glb','both'):
     for o in list(bpy.data.objects):
-        if o.type in('MESH',) and o.name.startswith(('Lantai','Torus')):bpy.data.objects.remove(o)
-    bpy.ops.export_scene.gltf(filepath=os.path.join(OUT,'volt_car.glb'),export_format='GLB',use_selection=False,export_apply=True,export_yup=True,export_cameras=False,export_lights=False)
+        if o.name.startswith(('Lantai','Circle','Torus','Cincin')):bpy.data.objects.remove(o)
+    bpy.ops.export_scene.gltf(filepath=os.path.join(OUT,'volt_car.glb'),export_format='GLB',export_yup=True,export_apply=True)
 print('selesai')

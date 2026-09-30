@@ -76,7 +76,7 @@ function buildSerena(ui){
   [-2,2].forEach(s=>{const cg=new T.PlaneGeometry(2,3.2,30,1);const cp=cg.attributes.position;for(let i=0;i<cp.count;i++)cp.setZ(i,Math.sin(cp.getX(i)*9)*.09);cg.computeVertexNormals();const cur=new T.Mesh(cg,new T.MeshStandardMaterial({map:linen.map,normalMap:linen.normalMap,roughness:.95,side:T.DoubleSide,transparent:true,opacity:.92}));cur.position.set(s*4.2,1.9,-3.85);cur.castShadow=true;V0.add(cur)});
   const vl=new T.PointLight(0xffcf9a,0,16,2);vl.position.set(0,3,0);V0.add(vl);R(vl,'intensity',0,10);
   // lampu gantung kuningan (Chandelier 03, hasil studi aset Blender) — dimuat di latar belakang
-  loadModel('chandelier_03').then(({scene:cm,meta})=>{
+  loadModel('chandelier_03',{meta:true}).then(({scene:cm,meta})=>{
     const K=1.5,brass=new T.MeshPhysicalMaterial({color:0xd4a24a,metalness:1,roughness:.26,clearcoat:.15,envMapIntensity:1.3}),
       glass=new T.MeshPhysicalMaterial({color:0xf2f7ff,metalness:0,roughness:.03,transparent:true,opacity:.3,ior:1.5,envMapIntensity:3,depthWrite:false,side:T.DoubleSide});
     cm.traverse(o=>{if(!o.isMesh)return;const isGlass=/glass/i.test(o.material.name);o.material=isGlass?glass:brass;o.castShadow=!isGlass;o.receiveShadow=true});
