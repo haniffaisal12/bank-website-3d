@@ -211,6 +211,35 @@ def tube(name,pts,r,material,cyclic=False):
     for p,v in zip(sp.points,pts):p.co=(v.x,v.y,v.z,1)
     sp.use_cyclic_u=cyclic
     ob=bpy.data.objects.new(name,cu);link(ob);ob.data.materials.append(material);return ob
+def to_mesh(ob):
+    me=bpy.data.meshes.new_from_object(ob.evaluated_get(bpy.context.evaluated_depsgraph_get()))
+    m=bpy.data.objects.new(ob.name,me);link(m);bpy.data.objects.remove(ob);return m
+
+def make_mirror(side,c,M,root):
+    # rumah spion tetes air: depan membulat, belakang rata berkaca krom, ujung luar menyapu ke belakang
+    bm=bmesh.new();bmesh.ops.create_cube(bm,size=1.0)
+    for _ in range(3):bmesh.ops.subdivide_edges(bm,edges=bm.edges[:],cuts=1,use_grid_fill=True)
+    for v in bm.verts:
+        x,y,z=v.co;r=(abs(x)**4+abs(y)**4+abs(z)**4)**.25 or 1
+        x,y,z=Vector((x,y,z))/r*.5
+        x*=2*(.075 if x>0 else .028)
+        taper=1-.18*max(0,x)/.075
+        y*=2*.105*taper;z*=2*.05*taper*(1 if z>0 else .9)
+        t=(y*side+.105)/.21;x-=.02*t;z-=.008*t
+        v.co=Vector((x,y,z))
+    for f in bm.faces:
+        f.smooth=True
+        f.material_index=1 if (f.normal.x<-.85 and f.calc_center_median().x<-.022) else 0
+    me=bpy.data.meshes.new('Spion');bm.to_mesh(me);bm.free()
+    me.materials.append(M['paint']);me.materials.append(M['chrome'])
+    s='L' if side>0 else 'R'
+    ob=link(bpy.data.objects.new('Spion_'+s,me),root);ob.location=c+Vector((-.005,side*.035,.025))
+    sub=ob.modifiers.new('Halus','SUBSURF');sub.levels=1;sub.render_levels=1
+    bm=bmesh.new();bmesh.ops.create_cone(bm,cap_ends=True,segments=16,radius1=.022,radius2=.016,depth=.12)
+    for f in bm.faces:f.smooth=True
+    me=bpy.data.meshes.new('SpionTangkai');bm.to_mesh(me);bm.free();me.materials.append(M['black'])
+    st=link(bpy.data.objects.new('SpionTangkai_'+s,me),root)
+    st.location=c+Vector((0,-side*.035,-.005));st.rotation_euler=(-side*math.pi/2,0,0);st.scale=(1.6,.7,1)
 
 def build(paint_color):
     root=bpy.data.objects.new('VOLT_E1',None);link(root)
@@ -252,11 +281,14 @@ def build(paint_color):
         # gagang pintu rata
         for (hx,hz) in((.55,1.08),(-.42,1.08)):
             p0=project_line(bvh,[(hx-.09,hz),(hx+.09,hz)],side,.004)
-            if len(p0)==2:tube('Gagang',p0,.009,M['trim']).parent=root
+            if len(p0)==2:
+                g=to_mesh(tube('Gagang',p0,.009,M['trim']));g.parent=root
+                b=g.modifiers.new('bevel','BEVEL');b.width=.004;b.segments=3;b.limit_method='ANGLE';smooth(g)
+                g.modifiers.new('wn','WEIGHTED_NORMAL').keep_sharp=True
         # spion
         p=project_line(bvh,[(1.02,1.16)],side,.03)
         if p:
-            mir=RBox(.13,.2,.10,.035,M['paint'],(p[0].x,p[0].y+side*.06,p[0].z+.04));mir.parent=root
+            make_mirror(side,Vector((p[0].x,p[0].y+side*.06,p[0].z+.04)),M,root)
     # celah kap mesin dan bagasi
     hood=[(1.0,.93)]  # placeholder
     # lampu depan: strip DRL + lensa
