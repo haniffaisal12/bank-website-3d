@@ -63,5 +63,13 @@ export const REG=[
   "acc": "#5fe6ff",
   "tag": "Semua cerita dimulai dari satu sel",
   "href": "concepts/genom.html"
+ },
+ {
+  "id": "kopi",
+  "name": "KAWAH KOPI",
+  "type": "E-commerce · F&B",
+  "acc": "#ff9a3a",
+  "tag": "Kopi yang tumbuh di tanah vulkanik",
+  "href": "concepts/kopi.html"
  }
 ];

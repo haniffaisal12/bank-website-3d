@@ -14,6 +14,7 @@ Bank inspirasi website 3D sinematik untuk **company profile** dan **e-commerce**
 | `concepts/celeste.html` | E-commerce / profil | Observatorium gunung, teleskop dan planet |
 | `concepts/volt.html` | E-commerce | Showroom SUV listrik dengan konfigurator |
 | `concepts/genom.html` | Company profile | Klinik genomik: menyelam dari sel ke heliks DNA |
+| `concepts/kopi.html` | E-commerce | Kedai kopi vulkanik: kawah, kebun, roastery, seduh |
 
 `index.html` adalah beranda: portal 3D ke semua konsep dan daftar ide yang belum dibangun.
 

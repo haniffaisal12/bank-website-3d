@@ -1,6 +1,5 @@
 /* Kerangka ide konsep berikutnya yang belum dibangun */
 export const IDEAS=[
- ['E-commerce · F&B','Kedai Kopi Vulkanik','Dari kawah gunung api ke ladang kopi, lalu ke ruang roasting. Slider suhu mengubah warna biji dan rasa yang direkomendasikan.'],
  ['Company Profile · Finansial','Vaulta Bank Kristal','Brankas kristal raksasa berputar. Roda kombinasi yang diputar pengguna membuka lapisan layanan satu per satu.'],
  ['E-commerce · Buku','Perpustakaan Tak Berujung','Menara buku spiral menjulang. Tombol genre menyusun ulang rak dengan animasi, kamera naik mengikuti buku terpilih.'],
  ['Company Profile · Arsitek','Studio Maket','Dari maket meja ke bangunan skala penuh. Slider fase membangun menampilkan tahap pondasi, struktur, dan interior.'],
