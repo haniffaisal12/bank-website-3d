@@ -29,6 +29,21 @@ Bank inspirasi website 3D sinematik untuk **company profile** dan **e-commerce**
   Browser baru mengizinkan suara setelah klik pertama. Tombol *Suara* di kanan atas mematikannya dan pilihan diingat.
 - **Gerak:** kursor khusus dan riak klik, bilah progres, teks muncul bertahap, dorongan FOV dan getar kamera pada aksi, getar ponsel saat menekan tombol.
 
+## Situs di dalam 3D (pilot: KAWAH KOPI)
+
+`concepts/kopi.html` bukan lagi slide konsep, melainkan **toko sungguhan yang hidup di dalam adegannya**:
+
+- **Setiap halaman adalah tempat.** Beranda = tepi kawah, Cerita = kebun, Proses & Kontak = pintu roastery, Sangrai = ruang sangrai,
+  Seduh = meja seduh, Toko = rak di dinding, Produk = pajangan berputar, Keranjang/Checkout/Lacak = meja kasir.
+  Pindah halaman membuat kamera terbang ke tempat itu; tombol kembali/maju browser dan tautan langsung (`#/produk/v60-set`) tetap bekerja.
+- **Tur 360°:** seret layar untuk melihat sekeliling dari titik mana pun, klik pin untuk pindah tempat, gulir atau tombol ‹ › untuk tur berurutan.
+- **Produk 360°:** di halaman produk kamera mengitari model 3D produknya; seret untuk memutar, gulir/cubit untuk mendekat. Varian (tingkat sangrai, berat, gilingan, warna)
+  langsung mengubah model dan labelnya. Gambar katalog dan keranjang adalah render dari model yang sama.
+- **Dunia ikut berubah:** barang di keranjang muncul di keranjang anyaman di meja kasir; tingkat sangrai mengubah warna biji di baki; tombol Seduh menjalankan ketel.
+- Konten panel adalah DOM biasa (bisa difokus, dibaca pembaca layar, dan diisi formulir). Keranjang, pesanan, kontak tetap simulasi di `localStorage`.
+- Kode: `js/world/world.js` (mesin: stasiun, terbang, 360°, orbit produk, pin, router), `js/world/shop.js` (panel e-commerce), `js/world/kopi.js` (tempat, perabot, model produk, panel cerita), `css/world.css`.
+  Parameter `?instant=1` mematikan animasi terbang (untuk pengujian).
+
 ## Situs lengkap (compro dan e-commerce)
 
 Selain pengalaman 3D, tiap konsep punya **situs sungguhan** di `sites/<id>.html` (tombol *Buka situs* di HUD 3D, dan *Jelajah 3D* di situsnya):

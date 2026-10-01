@@ -105,7 +105,9 @@ function buildKopi(ui){
   const grinder=mesh(new T.CylinderGeometry(.16,.2,.55,20),metal,CXp+.3,1.82,CZ+1.4,B);mesh(new T.ConeGeometry(.2,.3,20,1,true),copper,CXp+.3,2.2,CZ+1.4,B);
   let pf=0,brewT=-1,cartN=0,lava=false,lavaK=0;const cart=Cart(ui);
   function stat(){ui.stat('profile',ROAST[roast][3]);ui.stat('temp',ROAST[roast][2])}
-  return{scene,pick:[{objects:()=>[beans,rb],id:'roast',hint:'Klik: ganti tingkat sangrai'},{objects:()=>[kettle,dripper,cup],id:'brew',hint:'Klik: seduh kopi'}],look:{exp:.95,bloom:[.45,.7,1.0],vig:.38,grain:.025,tint:[1.02,1,.97],sat:1.1},
+  /* pegangan untuk situs 3D (js/world/kopi.js): posisi bangunan dan fungsi tinggi medan */
+  const world={B,by,BX,BZ,W,Dp,hFn,RX,RZ,TX,TZ,CXp,CZ,ROAST,stoneM,timber,metal,copper,jute,getRoast:()=>roast,isBrewing:()=>brewT>=0};
+  return{scene,world,pick:[{objects:()=>[beans,rb],id:'roast',hint:'Klik: ganti tingkat sangrai'},{objects:()=>[kettle,dripper,cup],id:'brew',hint:'Klik: seduh kopi'}],look:{exp:.95,bloom:[.45,.7,1.0],vig:.38,grain:.025,tint:[1.02,1,.97],sat:1.1},
     update(t,dt,cam){
       lavaK+=((lava?1:0)-lavaK)*(1-Math.exp(-dt*1.5));lavaLight.intensity=2200+1800*lavaK+Math.sin(t*3)*140;lake.material.color.setRGB(3.2*(.85+.3*lavaK),.9*(.8+.6*lavaK),.12);
       plume.forEach((s,i)=>{s.userData.p=(s.userData.p+dt*(.018+.012*lavaK))%1;const p=s.userData.p;s.position.set(Math.sin(i*2.1)*6*p+p*p*30,cY+p*(70+40*lavaK),VZ+Math.cos(i*1.7)*5*p-p*20);s.scale.setScalar(10+p*(55+25*lavaK));s.material.opacity=.55*(1-p)*Math.min(1,p*6)})
