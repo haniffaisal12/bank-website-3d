@@ -1,6 +1,6 @@
 /* CELESTE — toko teleskop & observatorium di kubahnya sendiri. Puncak = beranda, jalan menanjak = cerita, pintu = kontak,
    di bawah kubah = malam pengamatan (buka celah, arahkan teleskop), rak melengkung = katalog, alas kayu = produk 360°, meja = kasir. */
-import {T,V,Box,RBox,Cyl,mesh} from '../core.js';
+import {T,V,Box,RBox,Cyl,mesh,camera} from '../core.js';
 import {world} from './world.js';
 import {lath,label,shelf,pedestal,counter,wireShop} from './kit.js';
 import * as shop from './shop.js';
@@ -67,6 +67,8 @@ function setup(rt,W){const sc=rt.scene;const wood=new T.MeshStandardMaterial({co
     {pos:[sp[0],2.2,sp[2]],label:'Rak teleskop',sub:'Katalog',href:'#/toko',at:['kubah','kasir','pajang']},{pos:[kp[0],1.9,kp[2]],label:'Meja kasir',sub:'Keranjang',href:'#/keranjang',at:['kubah','rak','pajang']},
     {pos:[...at(PDA,3.2)].map((v,i)=>i===1?2.2:v),label:'Pajangan 360°',href:'#/produk/refraktor-cx80',at:['kubah','rak','kasir']},{pos:[0,2.2,5.8],label:'Keluar',sub:'Kontak',href:'#/kontak',at:['rak','kasir','pajang']}];
   wireShop(W,{site,model,shelves:[sh],ped,counter:ct,thumb:{rim:0xb9a6ff}});
+  if(rt.world)rt.world.tags.forEach(t=>t.visible=false);
+  W.aimAt=i=>{W.aim=i;rt.actions.aim(i);if(W.slit===false){W.slit=true;rt.actions.slit(true)}W.sfx('servo')};
 }
 const btn=(h,t,g)=>'<a class="wbtn'+(g?' ghost':'')+'" href="#'+h+'">'+t+'</a>';
 const TG=['Saturnus','Jupiter','Mars','Nebula'];
@@ -78,12 +80,30 @@ function langit(W){return{st:'kubah',title:'Malam pengamatan',html:'<p class="wk
   +'<div class="wrow"><button class="wtg" data-act="slit" aria-pressed="'+(W.slit!==false)+'"><i></i>Celah kubah: <b>'+(W.slit!==false?'Terbuka':'Tertutup')+'</b></button><button class="wtg" data-act="cons" aria-pressed="'+!!W.cons+'"><i></i>Rasi bintang</button></div>'
   +'<div class="wseg" role="group" aria-label="Arahkan teleskop" style="grid-template-columns:repeat(4,1fr)">'+TG.map((x,i)=>'<button data-act="aim" data-i="'+i+'" aria-pressed="'+((W.aim||0)===i)+'" style="--sw:'+['#e8d2a0','#d8a878','#d8603a','#b9a6ff'][i]+'"><i></i>'+x+'</button>').join('')+'</div>'
   +'<div class="wrow">'+btn('/produk/tiket-pengamatan','Pesan tiket Sabtu')+btn('/produk/refraktor-cx80','Teleskop ini 360°',1)+'</div>'}}
-const def={site,concept,stations,tour,audio:true,noglImg:'06',
-  nav:[['Beranda','/'],['Cerita','/tentang'],['Pengamatan','/langit'],['Toko','/toko'],['Lacak','/lacak'],['Kontak','/kontak']],
+/* ---------- pengalaman "peta langit": nav rasi bintang, panel kubah, pencari "ingin melihat apa?", koordinat langsung ---------- */
+const STARS=[['/','Puncak',18,150],['/tentang','Cerita',62,112],['/langit','Kubah',112,96],['/cari','Cari',150,58],['/toko','Rak',206,40],['/keranjang','Kasir',248,82],['/kontak','Kontak',232,140]];
+const WANT={planet:{t:'Bulan & planet',aim:0,d:'Cincin Saturnus, sabuk Jupiter, kawah bulan. Butuh ketajaman, bukan apertur raksasa.',rec:[['refraktor-cx80','Tajam dan cepat dipasang untuk planet.'],['filter-bulan','Mengurangi silau bulan, menaikkan kontras planet.'],['lensa-mata','Lensa 6,3 mm untuk perbesaran tinggi.']]},
+  nebula:{t:'Nebula & galaksi',aim:3,d:'Objek redup butuh apertur besar untuk mengumpulkan cahaya.',rec:[['dobson-8','Cermin 203 mm: nebula Orion jadi jelas.'],['peta-bintang','Menemukan objek langit dalam tanpa aplikasi.'],['lensa-mata','Lensa 25 mm untuk lapang pandang lebar.']]},
+  foto:{t:'Foto langit',aim:2,d:'Butuh dudukan yang mengikuti gerak langit.',rec:[['refraktor-cx80','Pilih dudukan Altaz + tracking.',{Dudukan:'Altaz + tracking'}],['filter-bulan','Filter warna untuk detail Mars dan Jupiter.']]},
+  anak:{t:'Untuk anak & keluarga',aim:1,d:'Mudah dipakai, cepat dapat hasil, lalu datang ke malam pengamatan.',rec:[['tiket-pengamatan','Dua jam bersama pemandu di kubah ini.'],['peta-bintang','Belajar rasi bintang bersama.'],['refraktor-cx80','Ringan dan sederhana untuk mulai.']]}};
+function cari(W,k){if(!k||!WANT[k])return{st:'kubah',title:'Cari',html:'<p class="wk">Pencari teleskop</p><h1 class="wh">Malam ini Anda ingin melihat apa?</h1><p class="wl">Pilih satu. Kami arahkan teleskop di kubah ini dan menyarankan alat yang tepat.</p>'
+  +'<div class="ce-want">'+Object.entries(WANT).map(([id,x])=>'<a href="#/cari/'+id+'"><i class="ce-'+id+'"></i><b>'+x.t+'</b><span>'+esc(x.d)+'</span></a>').join('')+'</div>'};
+  const x=WANT[k];W.aimAt&&W.aimAt(x.aim);
+  return{st:'kubah',title:x.t,html:'<p class="wk"><a href="#/cari">← Pencari</a> · '+x.t+'</p><h1 class="wh">Teleskop sudah diarahkan.</h1><p class="wl">'+esc(x.d)+' Lihat ke atas melalui celah kubah; seret untuk menengadah.</p>'
+   +x.rec.map((r,i)=>{const p=shop.P(site,r[0]);const q=r[2]?'?'+new URLSearchParams(r[2]):'';return '<a class="ce-rec'+(i?'':' top')+'" href="#/produk/'+p.id+q+'"><img src="'+(W.thumb?W.thumb(p.id,Object.assign(shop.defVar(p)||{},r[2]||{})):'')+'" alt=""><span><b>'+esc(p.name)+'</b><em>'+esc(r[1])+'</em></span><i>'+shop.rp(p.price)+'</i></a>'}).join('')
+   +'<div class="wrow">'+btn('/cari','Pilih yang lain',1)+btn('/toko','Bandingkan semua')+'</div>'}}
+function compare(){const t=['refraktor-cx80','dobson-8'].map(id=>shop.P(site,id));const row=(l,f)=>'<tr><th>'+l+'</th>'+t.map(p=>'<td>'+f(p)+'</td>').join('')+'</tr>';const sp=(p,k)=>(p.spec.find(x=>x[0]===k)||['','—'])[1];
+  return '<table class="ce-cmp"><tr><th></th>'+t.map(p=>'<td><b>'+esc(p.name)+'</b></td>').join('')+'</tr>'+row('Apertur',p=>sp(p,'Apertur'))+row('Fokus',p=>sp(p,'Panjang fokus'))+row('Berat',p=>sp(p,'Berat'))+row('Terbaik untuk',p=>p.id==='dobson-8'?'Nebula, galaksi':'Bulan, planet')+row('Harga',p=>shop.rp(p.price))+'</table>'}
+function chrome(W){const sky=document.createElement('nav');sky.id='ceSky';sky.setAttribute('aria-label','Peta situs rasi bintang');
+  sky.innerHTML='<svg viewBox="0 0 270 170" aria-hidden="true"><polyline points="'+STARS.map(x=>x[2]+','+x[3]).join(' ')+'"/><line x1="'+STARS[4][2]+'" y1="'+STARS[4][3]+'" x2="'+STARS[6][2]+'" y2="'+STARS[6][3]+'"/></svg>'
+   +STARS.map(x=>'<a href="#'+x[0]+'" data-r="'+x[0]+'" style="left:'+x[2]+'px;top:'+x[3]+'px"><i></i><span>'+x[1]+'</span></a>').join('');document.body.appendChild(sky);
+  const c=document.createElement('div');c.id='ceCoord';c.innerHTML='<span>ALT</span><b id="ceAlt">0°</b><span>AZ</span><b id="ceAz">0°</b>';document.body.appendChild(c)}
+const def={site,concept,stations,tour,audio:true,noglImg:'06',layout:'sky',avoid:['#wp'],chrome,
+  nav:[['Puncak','/'],['Cerita','/tentang'],['Kubah','/langit'],['Cari teleskop','/cari'],['Rak','/toko'],['Lacak','/lacak'],['Kontak','/kontak']],
   setup,
   route(r,W){const a=r.seg[0];
-    if(!a)return home();if(a==='tentang')return about();if(a==='langit')return langit(W);
-    if(a==='toko')return Object.assign(shop.catalog(site,W,r,{title:'Rak teleskop',sub:'Klik produk di rak, atau pilih di bawah. Setiap produk bisa diputar 360° di pajangan.'}),{st:'rak'});
+    if(!a)return home();if(a==='tentang')return about();if(a==='langit')return langit(W);if(a==='cari')return cari(W,r.seg[1]);
+    if(a==='toko'){const o=shop.catalog(site,W,r,{title:'Rak teleskop',sub:'Bandingkan dua teleskop kami, atau gunakan pencari jika masih ragu.'});o.html=o.html.replace('<div class="wchips">',compare()+'<div class="wrow">'+btn('/cari','Bantu saya memilih',1)+'</div><div class="wchips">');return Object.assign(o,{st:'rak'})}
     if(a==='produk'){const o=shop.product(site,W,r.seg[1],r.q);if(!o)return null;let tg=[0,1.3,0],sz=.6;if(W.showProduct){tg=W.showProduct(W.sel.pid,W.sel.vr);sz=W.orbitHint.size}return Object.assign(o,{st:'pajang',kind:'product',orbit:{target:tg,az:PDA+.6,el:.2,d:sz*1.6+.35,dmin:sz*.8,dmax:Math.min(2.4,sz*4)}})}
     if(a==='keranjang')return Object.assign(shop.cartPanel(site,W),{st:'kasir'});if(a==='checkout')return Object.assign(shop.checkout(site,W),{st:'kasir'});
     if(a==='pesanan')return Object.assign(shop.order(site,W,decodeURIComponent(r.seg[1]||'')),{st:'kasir'});if(a==='lacak')return Object.assign(shop.track(site,W,r),{st:'kasir'});
@@ -94,6 +114,8 @@ const def={site,concept,stations,tour,audio:true,noglImg:'06',
     else if(a==='cons'){W.cons=!W.cons;W.rt.actions.cons(W.cons);t.setAttribute('aria-pressed',W.cons);W.sfx('chime')}
     else if(a==='aim'){W.aim=+t.dataset.i;W.rt.actions.aim(W.aim);document.querySelectorAll('[data-act=aim]').forEach(b=>b.setAttribute('aria-pressed',b===t));W.sfx('servo')}
     else shop.act(site,W,t)},
+  onRoute(r,out,W){document.querySelectorAll('#ceSky a').forEach(a=>a.classList.toggle('on',a.dataset.r===r.path||(a.dataset.r!=='/'&&r.path.startsWith(a.dataset.r))||(a.dataset.r==='/toko'&&r.path.startsWith('/produk'))))},
+  tick(t,dt,W){if((W._ct=(W._ct||0)+1)%6)return;const d=camera.getWorldDirection(V(0,0,0)),alt=Math.asin(d.y)*57.3,az=(Math.atan2(d.x,-d.z)*57.3+360)%360;const A=document.getElementById('ceAlt');if(A){A.textContent=alt.toFixed(1)+'°';document.getElementById('ceAz').textContent=az.toFixed(1)+'°'}},
   onCart(W){W.onCartChange&&W.onCartChange()},
   refresh(r,W){if(r.seg[0]==='keranjang')W.render()}};
 world(def);

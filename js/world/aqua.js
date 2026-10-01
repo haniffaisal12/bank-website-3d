@@ -1,10 +1,10 @@
 /* AQUARIA — toko akuarium yang hidup di adegannya: gerbang di ujung dermaga = beranda, ambang = cerita,
    etalase bawah laut = katalog dengan rak karang, pajangan batu = produk 360°, kios di dermaga = kasir. */
-import {T,V,Box,RBox,Cyl,mesh,canvas,ctex} from '../core.js';
+import {T,V,Box,RBox,Cyl,mesh,canvas,ctex,camera} from '../core.js';
 import {world} from './world.js';
 import {lath,label,shelf,pedestal,counter,wireShop} from './kit.js';
 import * as shop from './shop.js';
-import {esc,toast} from '../site/ui.js';
+import {esc,toast,$} from '../site/ui.js';
 import site from '../sites/aqua.js';
 import {concept,fishBodyGeo,finGeo,fishTex,branchCoral,reefRock} from '../concepts/aqua.js';
 
@@ -80,6 +80,9 @@ function setup(rt,W){const sc=rt.scene;
   // kios kasir di dermaga, sisi kanan sebelum gerbang
   const ct=counter(sc,{pos:[2.2,.45,9.5],rotY:Math.PI,len:2.2,mat:dark,topMat:new T.MeshStandardMaterial({color:0xa82c18,roughness:.4}),model,site,basket:0x8a6a3a,screen:new T.Color(.4,1.8,1.8)});
   const kl=new T.PointLight(0xffa040,25,8,2);kl.position.set(1.5,3.2,9.5);sc.add(kl);
+  // label harga bawaan konsep diganti pin situs; kelp/karang di depan rak dan pajangan disingkirkan
+  if(rt.world){rt.world.tags.forEach(t=>t.visible=false);const clear=[[PD[0],PD[1],6.5],[SH[0],SH[1],6],[(PD[0]+12.6)/2,(PD[1]-22.6)/2,3.5],[-15,-10.5,4]];
+    rt.world.clutter().forEach(o=>{for(const c of clear)if(Math.hypot(o.position.x-c[0],o.position.z-c[1])<c[2]){o.visible=false;break}})}
   sc.userData.aoDirty=true;
   W.pins=[{pos:[0,7.5,0],label:'Gerbang AQUARIA',sub:'Masuk',href:'#/tentang',at:['gerbang']},{pos:[2.2,2,9.5],label:'Kios dermaga',sub:'Keranjang',href:'#/keranjang',at:['ambang','gerbang']},
     {pos:[0,-.5,-4],label:'Menyelam',sub:'Etalase bawah laut',href:'#/etalase',at:['ambang','kasir']},
@@ -95,18 +98,39 @@ function about(){const a=site.about;return{st:'ambang',title:'Cerita',html:'<p c
 function etalase(W){return{st:'etalase',title:'Etalase',html:'<p class="wk">Etalase bawah laut</p><h1 class="wh">Toko yang berenang</h1><p class="wl">Klik ikan untuk memberi makan, ganti jenis ikan yang berenang, lalu buka rak karang untuk belanja.</p>'
   +'<div class="wrow"><button class="wbtn" data-act="feed">Beri makan</button><button class="wbtn ghost" data-act="species">Ganti spesies</button></div><div class="wstat"><div><b id="fedN">'+(W.fed||0)+'</b><span>ikan kenyang</span></div><div><b>'+(W.fed>=10?'IKANKENYANG':'terkunci')+'</b><span>voucher (beri makan 10×)</span></div></div>'
   +'<div class="wrow">'+btn('/toko','Ke rak karang')+btn('/produk/badut-pasangan','Lihat ikan badut 360°',1)+'</div>'}}
-const def={site,concept,stations,tour,audio:true,noglImg:'06',
+/* ---------- pengalaman "menyelam": pengukur kedalaman, etalase gelembung, panel gelembung ---------- */
+const UNDER=['etalase','rak','pajang'];
+const GAUGE=[['gerbang','Gerbang'],['kasir','Kios & kasir'],['ambang','Ambang'],['etalase','Etalase'],['pajang','Pajangan'],['rak','Rak karang']];
+/* penanda dibagi rata; posisi penunjuk diinterpolasi dari kedalaman kamera */
+const gTop=i=>i/(GAUGE.length-1)*100,depthPos=y=>{const d=GAUGE.map(g=>depthOf(g[0]));if(y<=d[0])return 0;for(let i=1;i<d.length;i++)if(y<=d[i])return gTop(i-1)+(y-d[i-1])/Math.max(.01,d[i]-d[i-1])*(gTop(i)-gTop(i-1));return 100};
+const depthOf=st=>Math.max(0,-stations[st].pos[1]);
+function chrome(W){
+  const g=document.createElement('nav');g.id='aqDepth';g.setAttribute('aria-label','Kedalaman');const max=16;
+  g.innerHTML='<div class="aq-track"><i id="aqNow"><b id="aqM">0 m</b></i>'+GAUGE.map(([id,l],i)=>'<a href="#'+stations[id].href+'" data-st="'+id+'" style="top:'+gTop(i)+'%"><span>'+l+'</span><em>'+(depthOf(id)?'−'+depthOf(id).toFixed(0)+' m':'0 m')+'</em></a>').join('')+'</div>';document.body.appendChild(g);
+  const reel=document.createElement('div');reel.id='aqReel';reel.hidden=true;reel.innerHTML='<button class="aq-nav" data-dir="-1" aria-label="Geser kiri">‹</button><div class="aq-strip" id="aqStrip"></div><button class="aq-nav" data-dir="1" aria-label="Geser kanan">›</button>';document.body.appendChild(reel);
+  reel.addEventListener('click',e=>{const b=e.target.closest('.aq-nav');if(b)$('#aqStrip').scrollBy({left:+b.dataset.dir*280,behavior:'smooth'})});
+  const bub=document.createElement('div');bub.id='aqBub';document.body.appendChild(bub);W.bubbles=()=>{if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;bub.innerHTML=Array.from({length:18},(_,i)=>'<i style="left:'+(Math.random()*100)+'%;animation-delay:'+(Math.random()*.6)+'s;width:'+(6+Math.random()*16)+'px"></i>').join('');bub.classList.remove('go');void bub.offsetWidth;bub.classList.add('go')};
+}
+function drawReel(W,cat,active){const st=$('#aqStrip');if(!st)return;const l=site.products.filter(p=>!cat||cat==='semua'||p.cat===cat);
+  st.innerHTML=l.map(p=>'<a href="#/produk/'+p.id+'" class="'+(p.id===active?'on':'')+'"><span class="b"><img src="'+(W.thumb?W.thumb(p.id,shop.defVar(p)):'')+'" alt=""></span><b>'+esc(p.name)+'</b><em>'+shop.rp(p.price)+'</em></a>').join('')}
+function tokoPanel(r){const cat=r.q.get('k')||'semua';return{st:'rak',title:'Rak karang',html:'<p class="wk">Rak karang · −14 m</p><h1 class="wh">Belanja di bawah laut</h1><p class="wl">Geser etalase gelembung di bawah, atau klik produk di rak karang. Setiap produk bisa dilihat 360° di pajangan batu.</p>'
+  +'<div class="wchips">'+['semua'].concat(site.categories.map(c=>c.id)).map(c=>'<a class="wchip'+(c===cat?' on':'')+'" href="#/toko'+(c==='semua'?'':'?k='+c)+'">'+(c==='semua'?'Semua':esc(site.categories.find(x=>x.id===c).name))+'</a>').join('')+'</div>'
+  +'<ul class="wusp">'+site.usp.slice(0,2).map(u=>'<li><b>'+esc(u[0])+'</b><span>'+esc(u[1])+'</span></li>').join('')+'</ul><div class="wrow"><a class="wbtn ghost" href="#/keranjang">Naik ke kios kasir ↑</a></div>'}}
+const def={site,concept,stations,tour,audio:true,noglImg:'06',layout:'dive',avoid:['#wp','#aqReel'],chrome,
   nav:[['Beranda','/'],['Cerita','/tentang'],['Etalase','/etalase'],['Toko','/toko'],['Lacak','/lacak'],['Kontak','/kontak']],
   setup,
   route(r,W){const a=r.seg[0];
     if(!a)return home();if(a==='tentang')return about();if(a==='etalase'||a==='selam')return etalase(W);
-    if(a==='toko')return Object.assign(shop.catalog(site,W,r,{title:'Rak karang',sub:'Klik produk di rak karang, atau pilih di bawah. Ikan dan karang bisa dilihat 360° di pajangan.'}),{st:'rak'});
+    if(a==='toko')return tokoPanel(r);
     if(a==='produk'){const o=shop.product(site,W,r.seg[1],r.q);if(!o)return null;let tg=[PD[0],-15,PD[1]],sz=.6;if(W.showProduct){tg=W.showProduct(W.sel.pid,W.sel.vr);sz=W.orbitHint.size}return Object.assign(o,{st:'pajang',kind:'product',orbit:{target:tg,az:-.5,el:.2,d:sz*1.5+.35,dmin:sz*.9,dmax:sz*4}})}
     if(a==='keranjang')return Object.assign(shop.cartPanel(site,W),{st:'kasir'});if(a==='checkout')return Object.assign(shop.checkout(site,W),{st:'kasir'});
     if(a==='pesanan')return Object.assign(shop.order(site,W,decodeURIComponent(r.seg[1]||'')),{st:'kasir'});if(a==='lacak')return Object.assign(shop.track(site,W,r),{st:'kasir'});
     if(a==='kontak'||a==='faq')return Object.assign(shop.contact(site,W,'Kios dermaga'),{st:'kasir'});return null},
   pickAction(id,W){if(id==='feed'){W.rt.actions.feed();W.fed=(W.fed||0)+1;const n=document.getElementById('fedN');if(n)n.textContent=W.fed;if(W.fed===10){toast('Voucher IKANKENYANG terbuka: diskon 10%.','ok');site.coupons.IKANKENYANG={type:'percent',value:10,max:200000}}W.sfx('plop');return true}},
   act(t,e,W){const a=t.dataset.act;if(a==='feed')def.pickAction('feed',W);else if(a==='species'){W.sp=((W.sp||0)+1)%3;W.rt&&W.rt.actions.species(W.sp);W.sfx('plop')}else shop.act(site,W,t)},
+  onRoute(r,out,W){const st=out.st,under=UNDER.includes(st),reel=$('#aqReel');reel.hidden=!under;if(under)drawReel(W,r.q.get('k'),r.seg[0]==='produk'?r.seg[1]:null);
+    document.querySelectorAll('#aqDepth a').forEach(a=>a.classList.toggle('on',a.dataset.st===st));document.documentElement.classList.toggle('aq-under',under);if(W.bubbles&&W._lastSt!==st&&(under||(W._lastSt&&UNDER.includes(W._lastSt))))W.bubbles();W._lastSt=st},
+  tick(t,dt,W){const n=$('#aqNow');if(!n)return;const y=Math.max(0,-camera.position.y);n.style.top=depthPos(y)+'%';const m=$('#aqM');const v=y<.3?'0 m':'−'+y.toFixed(1)+' m';if(m.textContent!==v)m.textContent=v},
   onCart(W){W.onCartChange&&W.onCartChange()},
   refresh(r,W){if(r.seg[0]==='keranjang')W.render()}};
 world(def);

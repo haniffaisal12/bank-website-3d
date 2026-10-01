@@ -64,24 +64,46 @@ function setup(rt,W){const sc=rt.scene;
   wireShop(W,{site,model,shelves:[sh],ped,counter:ct,thumb:{rim:0x9be564}});
 }
 const btn=(h,t,g)=>'<a class="wbtn'+(g?' ghost':'')+'" href="#'+h+'">'+t+'</a>';
-function home(){const h=site.home;return{st:'bukit',kind:'hero',title:'Beranda',html:'<p class="wk">'+esc(h.eyebrow)+'</p><h1 class="wh big">'+h.title+'</h1><p class="wl">'+esc(h.sub)+'</p>'
-  +'<div class="wrow">'+btn('/toko','Lihat tanaman')+btn('/tentang','Mulai tur',1)+'</div><ul class="wusp">'+site.usp.map(u=>'<li><b>'+esc(u[0])+'</b><span>'+esc(u[1])+'</span></li>').join('')+'</ul><p class="wtiny">Gulir atau tekan › untuk menyusuri jalan. Seret layar untuk melihat sekeliling 360°.</p>'}}
+/* ---------- pengalaman "jurnal kebun": buku catatan kiri bertab, kuis tanaman yang cocok ---------- */
+const TABS=[['/','Sampul'],['/cocok','Cocokkan'],['/toko','Lapak'],['/rawat','Rawat'],['/tentang','Cerita'],['/keranjang','Keranjang']];
+const QS=[{k:'c',q:'Seberapa terang ruangan Anda?',o:[['t','Terang, dekat jendela'],['s','Sedang, cahaya tidak langsung'],['r','Redup, jauh dari jendela']]},
+  {k:'a',q:'Seberapa sering Anda sempat menyiram?',o:[['r','Rajin, dua kali seminggu'],['k','Kadang, seminggu sekali'],['l','Sering lupa']]},
+  {k:'h',q:'Ada kucing atau anjing di rumah?',o:[['y','Ada'],['n','Tidak ada']]},
+  {k:'u',q:'Tanamannya mau ditaruh di mana?',o:[['m','Meja atau rak'],['l','Lantai, jadi sorotan'],['g','Digantung']]}];
+const FIT={monstera:{c:'ts',a:'kl',h:'n',u:'l'},'ficus-lyrata':{c:'t',a:'k',h:'n',u:'l'},calathea:{c:'sr',a:'r',h:'yn',u:'m'},pothos:{c:'srt',a:'rkl',h:'n',u:'gm'}};
+const WHY={monstera:'Tahan lupa menyiram dan cepat tumbuh di cahaya tidak langsung.',"ficus-lyrata":'Butuh jendela terang dan siraman teratur; hasilnya dramatis.',calathea:'Aman untuk hewan dan senang ruangan teduh yang lembap.',pothos:'Hampir mustahil mati, cocok untuk ruang redup dan pot gantung.'};
+function score(ans){return Object.entries(FIT).map(([id,f])=>{let s=0,n=0;for(const k in ans){n++;if(f[k]&&f[k].includes(ans[k]))s++}return{id,p:Math.round(s/Math.max(1,n)*100)}}).sort((a,b)=>b.p-a.p)}
+function cocok(W,r){const ans={};QS.forEach(q=>{const v=r.q.get(q.k);if(v)ans[q.k]=v});const step=Object.keys(ans).length;
+  if(step<QS.length){const q=QS[step];const base=new URLSearchParams(r.q);
+    return{st:['bedeng','lapak','pintu','bedeng'][step],title:'Cocokkan',kind:'quiz',html:'<p class="wk">Halaman '+(step+1)+' dari '+QS.length+'</p><h1 class="wh">'+esc(q.q)+'</h1><div class="fl-dots">'+QS.map((_,i)=>'<i class="'+(i<step?'done':i===step?'cur':'')+'"></i>').join('')+'</div>'
+      +'<div class="fl-opts">'+q.o.map(o=>{const u=new URLSearchParams(base);u.set(q.k,o[0]);return '<a href="#/cocok?'+u+'"><span>'+esc(o[1])+'</span><i>→</i></a>'}).join('')+'</div>'
+      +(step?'<a class="fl-back" href="#/cocok">Ulangi dari awal</a>':'<p class="wtiny">Empat pertanyaan singkat. Jawaban Anda tidak disimpan.</p>')}}
+  const res=score(ans),top=res[0];W.quizTop=top.id;
+  return{st:'pajang',title:'Hasil',kind:'product',orbit:{target:[0,1.6,-6.6],az:.3,el:.12,d:1.9,dmin:.8,dmax:3.5},html:'<p class="wk">Hasil pencocokan</p><h1 class="wh">Tanaman untuk Anda</h1><p class="wl">Yang paling cocok sudah kami taruh di pajangan. Seret untuk memutarnya 360°.</p>'
+    +res.map((x,i)=>{const p=shop.P(site,x.id);return '<a class="fl-res'+(i?'':' top')+'" href="#/produk/'+x.id+'"><img src="'+(W.thumb?W.thumb(x.id,shop.defVar(p)):'')+'" alt=""><span><b>'+esc(p.name)+'</b><em>'+esc(WHY[x.id])+'</em><small>'+shop.rp(p.price)+'</small></span><i>'+x.p+'%</i></a>'}).join('')
+    +'<div class="wrow">'+btn('/produk/'+top.id,'Lihat '+esc(shop.P(site,top.id).name))+btn('/cocok','Ulangi',1)+'</div>'}}
+function home(){const h=site.home;return{st:'bukit',kind:'hero',title:'Sampul',html:'<p class="wk">Jurnal kebun · Lembang</p><h1 class="wh big">'+h.title+'</h1><p class="wl">'+esc(h.sub)+'</p>'
+  +'<div class="fl-note">Belum tahu tanaman apa yang cocok? Jawab empat pertanyaan, kami taruh pilihannya di pajangan.</div>'
+  +'<div class="wrow">'+btn('/cocok','Cocokkan tanaman')+btn('/toko','Ke lapak',1)+'</div><ul class="wusp">'+site.usp.map(u=>'<li><b>'+esc(u[0])+'</b><span>'+esc(u[1])+'</span></li>').join('')+'</ul>'}}
 function about(){const a=site.about;return{st:'jalan',title:'Cerita',html:'<p class="wk">Jalan setapak</p><h1 class="wh">'+esc(a.title)+'</h1><p class="wl">'+esc(a.sub)+'</p>'+a.paras.map(p=>'<p>'+esc(p)+'</p>').join('')
-  +'<h3>Yang kami pegang</h3>'+a.values.map(v=>'<p><b>'+esc(v[0])+'.</b> '+esc(v[1])+'</p>').join('')+site.testi.slice(0,2).map(t=>'<blockquote>“'+esc(t[0])+'” <cite>'+esc(t[1])+', '+esc(t[2])+'</cite></blockquote>').join('')+'<div class="wrow">'+btn('/toko','Ke lapak tanaman')+'</div>'}}
-function rawat(W){return{st:'bedeng',title:'Perawatan',html:'<p class="wk">Bedeng rumah kaca</p><h1 class="wh">Cara kami merawat</h1><p class="wl">Siram bedeng dan lihat tanaman tumbuh, atau nyalakan lampu tumbuh. Setiap tanaman diaklimatisasi tiga minggu di sini sebelum dikirim.</p>'
+  +'<h3>Yang kami pegang</h3>'+a.values.map(v=>'<p><b>'+esc(v[0])+'.</b> '+esc(v[1])+'</p>').join('')+site.testi.slice(0,2).map(t=>'<blockquote>“'+esc(t[0])+'” <cite>'+esc(t[1])+', '+esc(t[2])+'</cite></blockquote>').join('')+'<div class="wrow">'+btn('/cocok','Cocokkan tanaman')+'</div>'}}
+function rawat(W){return{st:'bedeng',title:'Rawat',html:'<p class="wk">Bedeng rumah kaca</p><h1 class="wh">Cara kami merawat</h1><p class="wl">Siram bedeng dan lihat tanaman tumbuh, atau nyalakan lampu tumbuh. Setiap tanaman diaklimatisasi tiga minggu di sini sebelum dikirim.</p>'
   +'<div class="wrow"><button class="wbtn" data-act="water">Siram</button><button class="wtg" data-act="uv" aria-pressed="'+!!W.uv+'"><i></i>Lampu tumbuh: <b>'+(W.uv?'Nyala':'Mati')+'</b></button></div>'
   +'<ol class="wsteps"><li><b>Cahaya</b>Terang tidak langsung untuk sebagian besar tanaman daun.</li><li><b>Air</b>Siram saat 3 cm tanah atas kering.</li><li><b>Kelembapan</b>Calathea suka lembap; semprot pagi hari.</li><li><b>Pupuk</b>Sebulan sekali di musim tumbuh.</li></ol>'
   +'<div class="wrow">'+btn('/produk/monstera','Lihat Monstera 360°')+btn('/toko','Ke lapak',1)+'</div>'}}
-const def={site,concept,stations,tour,audio:true,panelLight:true,noglImg:'04',
-  nav:[['Beranda','/'],['Cerita','/tentang'],['Toko','/toko'],['Perawatan','/rawat'],['Lacak','/lacak'],['Kontak','/kontak']],
+function chrome(W){const t=document.createElement('nav');t.id='flTabs';t.setAttribute('aria-label','Tab jurnal');t.innerHTML=TABS.map(x=>'<a href="#'+x[0]+'" data-r="'+x[0]+'">'+x[1]+'</a>').join('');document.body.appendChild(t)}
+const def={site,concept,stations,tour,audio:true,panelLight:true,noglImg:'04',layout:'journal',avoid:['#wp'],chrome,
+  nav:[['Sampul','/'],['Cocokkan','/cocok'],['Lapak','/toko'],['Rawat','/rawat'],['Cerita','/tentang'],['Lacak','/lacak'],['Kontak','/kontak']],
   setup,
   route(r,W){const a=r.seg[0];
     if(!a)return home();if(a==='tentang')return about();if(a==='rawat')return rawat(W);
+    if(a==='cocok'){const o=cocok(W,r);if(o.orbit&&W.showProduct){const p=shop.P(site,W.quizTop);const tg=W.showProduct(p.id,shop.defVar(p));const sz=W.orbitHint.size;o.orbit=Object.assign(o.orbit,{target:tg,d:sz*2.1+.5,dmin:sz,dmax:sz*4})}return o}
     if(a==='toko')return Object.assign(shop.catalog(site,W,r,{title:'Lapak tanaman',sub:'Klik tanaman di lapak, atau pilih di bawah. Setiap tanaman bisa diputar 360° di pajangan rumah kaca.'}),{st:'lapak'});
     if(a==='produk'){const o=shop.product(site,W,r.seg[1],r.q);if(!o)return null;let tg=[0,1.6,-6.6],sz=.6;if(W.showProduct){tg=W.showProduct(W.sel.pid,W.sel.vr);sz=W.orbitHint.size}return Object.assign(o,{st:'pajang',kind:'product',orbit:{target:tg,az:0,el:.12,d:sz*2.1+.5,dmin:sz,dmax:sz*4}})}
     if(a==='keranjang')return Object.assign(shop.cartPanel(site,W),{st:'kasir'});if(a==='checkout')return Object.assign(shop.checkout(site,W),{st:'kasir'});
     if(a==='pesanan')return Object.assign(shop.order(site,W,decodeURIComponent(r.seg[1]||'')),{st:'kasir'});if(a==='lacak')return Object.assign(shop.track(site,W,r),{st:'kasir'});
     if(a==='kontak'||a==='faq')return Object.assign(shop.contact(site,W,'Pintu rumah kaca'),{st:'pintu'});return null},
+  onRoute(r,out,W){document.querySelectorAll('#flTabs a').forEach(a=>a.classList.toggle('on',a.dataset.r===r.path||(a.dataset.r!=='/'&&r.path.startsWith(a.dataset.r))||(a.dataset.r==='/toko'&&r.path.startsWith('/produk'))||(a.dataset.r==='/keranjang'&&/^\/(checkout|pesanan|lacak)/.test(r.path))))},
   pickAction(id,W){if(id==='water'){W.rt.actions.water();W.sfx('rain');return true}},
   act(t,e,W){const a=t.dataset.act;if(a==='water'){W.rt&&W.rt.actions.water();W.sfx('rain')}else if(a==='uv'){W.uv=!W.uv;W.rt&&W.rt.actions.uv(W.uv);t.setAttribute('aria-pressed',W.uv);t.querySelector('b').textContent=W.uv?'Nyala':'Mati';W.sfx(W.uv?'power':'off')}else shop.act(site,W,t)},
   onCart(W){W.onCartChange&&W.onCartChange()},

@@ -24,7 +24,9 @@ function buildSerena(ui){
   const lagoonM=new T.MeshBasicMaterial({color:0x35e0cc,transparent:true,opacity:.55,alphaMap:ctex(lc,false),depthWrite:false,fog:true});const lagoon=new T.Mesh(new T.CircleGeometry(66,64),lagoonM);lagoon.rotation.x=-Math.PI/2;lagoon.position.set(0,-.3,26);scene.add(lagoon);R(lagoonM,'opacity',.55,.12);
   // pulau
   const CZ=26,SH=42;
-  const hFn=(x,z)=>{const d=Math.hypot(x,z-CZ);let h;const t=(SH-d)/9;if(t<0)h=-1.6+t*.05;else if(t<1)h=-1.3+sstep(0,1,t)*1.5;else h=.2+Math.sin(x*.07)*.25*Math.cos(z*.06)+Math.sin(x*.19+z*.13)*.08;const flat=Math.max(sstep(16,9,Math.hypot(x*.8,(z-16)*.9)),0);return lerp(h,.06,flat*(d<38?1:0))};
+  const hFn=(x,z)=>{const d=Math.hypot(x,z-CZ);let h;const t=(SH-d)/9;if(t<0)h=-1.6+t*.05;else if(t<1)h=-1.3+sstep(0,1,t)*1.5;else h=.2+Math.sin(x*.07)*.25*Math.cos(z*.06)+Math.sin(x*.19+z*.13)*.08;const flat=Math.max(sstep(16,9,Math.hypot(x*.8,(z-16)*.9)),0);h=lerp(h,.06,flat*(d<38?1:0));
+    // lubang kolam renang (dinding dan tepi kolam menutup lerengnya)
+    if(Math.abs(x)<8.3&&Math.abs(z-20)<4.3)h=-1.6;return h};
   const tg=new T.PlaneGeometry(180,180,200,200);tg.rotateX(-Math.PI/2);tg.translate(0,0,CZ);const tp=tg.attributes.position,tcol=new Float32Array(tp.count*3),nz=fbm(64,64,{fx:6,fy:6,oct:4,seed:5});
   for(let i=0;i<tp.count;i++){const x=tp.getX(i),z=tp.getZ(i),h=hFn(x,z);tp.setY(i,h);const d=Math.hypot(x,z-CZ),n=nz[((Math.abs(Math.floor(z*.7))%64)*64)+(Math.abs(Math.floor(x*.7))%64)];
     const grass=sstep(.02,.32,h+(n-.5)*.5),wet=sstep(-.5,.1,h);const sand=new T.Color(0xc9b489).lerp(new T.Color(0x8a7a52),1-wet),gr=new T.Color(0x4f8a3a).lerp(new T.Color(0x86a84a),n);const c=sand.lerp(gr,grass*(d<SH-6?1:0));tcol[i*3]=c.r;tcol[i*3+1]=c.g;tcol[i*3+2]=c.b}
@@ -91,9 +93,15 @@ function buildSerena(ui){
   for(let i=0;i<14;i++){const x=-6+i*12/13,y=3.2-Math.sin(i/13*Math.PI)*.5;const bm=new T.MeshStandardMaterial({color:0x221100,emissive:0xffc060,emissiveIntensity:.15});Sph(.09,bm,x,y,-9.7,V0,12,8).castShadow=false;R(bm,'emissiveIntensity',.15,4);const gl=glow(0xffc670,1.3,x,y,-9.7,V0,0);R(gl.material,'opacity',0,.7)}
   // kolam
   const poolWater=new T.MeshPhysicalMaterial({color:0x3fd8dc,transparent:true,opacity:.82,roughness:.05,metalness:0,envMapIntensity:1.6,clearcoat:1,normalMap:wn.clone(),normalScale:new T.Vector2(.25,.25),emissive:0x0aa0b0,emissiveIntensity:.15});poolWater.normalMap.repeat.set(8,4);poolWater.normalMap.needsUpdate=true;
-  const pw=mesh(new T.PlaneGeometry(16,8),poolWater,0,.03,20,scene);pw.rotation.x=-Math.PI/2;pw.castShadow=false;R(poolWater,'emissiveIntensity',.15,1.3);
-  Box(16,.05,8,tileM,0,-.6,20,scene);Box(16.8,.3,.4,tileM,0,.15,15.8,scene);Box(16.8,.3,.4,tileM,0,.15,24.2,scene);Box(.4,.3,8.4,tileM,-8.2,.15,20,scene);Box(.4,.3,8.4,tileM,8.2,.15,20,scene);
-  const pl2=new T.PointLight(0x40e0f0,0,18,2);pl2.position.set(0,-.3,20);scene.add(pl2);R(pl2,'intensity',0,40);
+  // kolam sungguhan: cekungan berlapis mozaik, dinding dalam, tepi batu, air di bawah bibir kolam
+  const mosaic=pbr({hf:tileHF(20,.05),fx:6,fy:6,oct:3,c0:0x3fb8c8,c1:0x9fe8f0,nS:2,r0:.2,r1:.45,rep:[4,2],w:256});
+  poolWater.opacity=.62;poolWater.color.setHex(0x2fc8d4);
+  const pw=mesh(new T.PlaneGeometry(16,8),poolWater,0,-.14,20,scene);pw.rotation.x=-Math.PI/2;pw.castShadow=false;R(poolWater,'emissiveIntensity',.15,1.3);
+  Box(16,.1,8,mosaic,0,-1.45,20,scene).castShadow=false;
+  Box(16,1.45,.1,mosaic,0,-.72,15.95,scene);Box(16,1.45,.1,mosaic,0,-.72,24.05,scene);Box(.1,1.45,8,mosaic,-7.95,-.72,20,scene);Box(.1,1.45,8,mosaic,7.95,-.72,20,scene);
+  Box(18.4,.18,1.2,tileM,0,.09,15.4,scene);Box(18.4,.18,1.2,tileM,0,.09,24.6,scene);Box(1.2,.18,8,tileM,-8.6,.09,20,scene);Box(1.2,.18,8,tileM,8.6,.09,20,scene);
+  [-1,1].forEach(s=>{for(let k=0;k<4;k++)Box(1.4,.06,.3,tileM,s*6.2,-.1-k*.3,16.2+k*.32,scene)});
+  const pl2=new T.PointLight(0x40e0f0,0,18,2);pl2.position.set(0,-1,20);scene.add(pl2);R(pl2,'intensity',0,40);
   for(let i=0;i<4;i++){const x=-6+i*4;RBox(1,.32,2.3,.06,linen,x,.5,27.5,scene);Box(1.1,.1,2.4,woodD,x,.3,27.5,scene)}
   [-9,9].forEach(x=>{Cyl(.04,.04,2.6,woodD,x,1.3,26.5,scene,6);const um=mesh(new T.ConeGeometry(1.8,.7,16,1,true),new T.MeshStandardMaterial({map:linen.map,color:0xf3e4c8,side:T.DoubleSide,roughness:.9}),x,2.7,26.5,scene)});
   // jalan batu

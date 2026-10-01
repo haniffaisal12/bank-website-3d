@@ -34,6 +34,7 @@ export async function world(def){
     for(const k in m)if(m[k])r.setProperty(k,m[k]);if(light)document.documentElement.classList.add('wlight');
     if(site.fonts&&!document.querySelector('link[data-wf]')){const l=document.createElement('link');l.rel='stylesheet';l.href=site.fonts;l.dataset.wf=1;document.head.appendChild(l)}}
   /* ---------- DOM ---------- */
+  document.documentElement.classList.add('L-'+(def.layout||'classic'));
   const nav=def.nav;
   document.body.insertAdjacentHTML('beforeend',
    '<a class="skip" href="#wpBody">Lewati ke konten</a>'
@@ -121,9 +122,17 @@ export async function world(def){
     if(p.on)b.onclick=e=>{e.preventDefault();p.on()};b.addEventListener('pointerenter',()=>SND.sfx('hover'));pinsEl.appendChild(b);p.el=b;p.v=V(...p.pos)})}
   W.refreshPins=mkPins;mkPins();
   const pv=new T.Vector3();
+  /* elemen antarmuka yang menutupi adegan: pusat gambar digeser menjauhinya, pin di bawahnya disembunyikan */
+  let avX=0,avY=0,avN=0,avR=[];
+  function avoid(){let x=0,y=0;avR=[];for(const sel of (def.avoid||['#wp'])){const el=$(sel);if(!el||el.hidden||(el===wp&&collapsed))continue;const r=el.getBoundingClientRect();if(r.width<2||r.height<2)continue;avR.push(r);
+      const tall=r.height>innerHeight*.4,wide=r.width>innerWidth*.55;
+      if(wide&&r.top>innerHeight*.3)y+=Math.min(innerHeight-r.top,innerHeight*.6)/2;else if(wide&&r.bottom<innerHeight*.5)y-=Math.min(r.bottom,innerHeight*.4)/2;
+      else if(tall&&r.left>innerWidth*.35)x+=(innerWidth-r.left+16)/2;else if(tall&&r.right<innerWidth*.65)x-=(r.right+16)/2}
+    avX=x;avY=y}
+  W.avoid=avoid;
   function updPins(){const show=!flight;for(const p of W.pins){const el=p.el;let ok=show&&(!p.at||p.at.includes(W.stationId))&&(!p.when||p.when());
       if(ok){pv.copy(p.v).project(camera);if(pv.z>1||pv.z<-1)ok=false;else{p.sx=(pv.x*.5+.5)*innerWidth;p.sy=(-pv.y*.5+.5)*innerHeight;if(p.sx<10||p.sx>innerWidth-10||p.sy<64||p.sy>innerHeight-10)ok=false}}
-      if(ok&&!collapsed&&!MOB){const r=wp.getBoundingClientRect();if(p.sx>r.left-8&&p.sy>r.top&&p.sy<r.bottom)ok=false}
+      if(ok)for(const r of avR)if(p.sx>r.left-8&&p.sx<r.right+8&&p.sy>r.top-8&&p.sy<r.bottom+8){ok=false;break}
       if(!ok){if(!el.hidden)el.hidden=true}else{el.hidden=false;el.style.transform='translate('+p.sx.toFixed(1)+'px,'+p.sy.toFixed(1)+'px)'}}}
 
   /* ---------- router ---------- */
@@ -140,9 +149,10 @@ export async function world(def){
     document.title=(out.title?out.title+' · ':'')+site.brand.name;
     $$('#wnav a[data-r]').forEach(a=>a.classList.toggle('on',a.dataset.r===r.path||(a.dataset.r!=='/'&&r.path.startsWith(a.dataset.r))));$('#wnav').classList.remove('open');
     reveal(wpBody);if(out.after)out.after(wpBody,r,W);
-    if(document.activeElement&&document.activeElement!==document.body&&!wp.contains(document.activeElement))wpBody.focus({preventScroll:true})}
+    def.onRoute&&def.onRoute(r,out,W);avoid();
+    if(document.activeElement&&document.activeElement!==document.body&&!wp.contains(document.activeElement)&&!(def.keepFocus&&def.keepFocus()))wpBody.focus({preventScroll:true})}
   const $$=(s,r)=>[...(r||document).querySelectorAll(s)];
-  W.render=render;
+  W.render=render;W.parse=parse;W.setCollapsed=setCollapsed;W.isCollapsed=()=>collapsed;W.tour=tour;
   document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(t&&def.act)def.act(t,e,W);if(e.target.closest('a,button'))SND.sfx('click')});
   document.addEventListener('input',e=>{const r=e.target.closest&&e.target.closest('.fld.bad');if(r){r.classList.remove('bad');const m=r.querySelector('.err');if(m)m.remove()}});
   on(e=>{if(e.detail!==site.id)return;badge();def.onCart&&def.onCart(W);const r=parse();if(def.refresh)def.refresh(r,W)});
@@ -184,7 +194,7 @@ export async function world(def){
       camera.position.lerp(op,k);const lk=pos.clone().add(dir.clone().multiplyScalar(dl)).lerp(orb.t,k);camera.lookAt(lk)}
     else{if(!reduce&&!flight)camera.position.y+=Math.sin(tt*.6)*.012;camera.lookAt(camera.position.clone().add(dir))}
     // geser pusat gambar menjauhi panel: ke kiri di desktop, ke atas di ponsel (bottom sheet)
-    const vo=collapsed?0:MOB?0:(wp.offsetWidth+24)/2,vh=collapsed||!MOB?0:Math.min(wp.offsetHeight,innerHeight*.6)/2;ox+=(vo-ox)*Math.min(1,dt*4);oy+=(vh-oy)*Math.min(1,dt*4);
+    if(++avN%8===0)avoid();ox+=(avX-ox)*Math.min(1,dt*4);oy+=(avY-oy)*Math.min(1,dt*4);
     if(Math.abs(ox-oxSet)>.3||Math.abs(oy-oySet)>.3){oxSet=ox;oySet=oy;camera.setViewOffset(innerWidth,innerHeight,ox,oy,innerWidth,innerHeight)}
     kick*=Math.exp(-dt*5);const fv=FOVB+fovZ+(reduce?0:kick*1.4);if(Math.abs(camera.fov-fv)>.01){camera.fov=fv;camera.updateProjectionMatrix()}
     rt.update(tt,dt,camera);def.tick&&def.tick(tt,dt,W);camera.updateMatrixWorld();updPins();
@@ -194,6 +204,7 @@ export async function world(def){
     if(quality>0&&composer){if(gtao)gtao.enabled=quality>=2;bloom.strength=L0.bl[0];bloom.radius=L0.bl[1];bloom.threshold=L0.bl[2];const u=grade.uniforms;u.uTime.value=tt%10;u.uVig.value=L0.vig;u.uGrain.value=L0.grain;u.uTint.value.set(...L0.tint);u.uSat.value=L0.sat;composer.render(dt)}
     else renderer.render(rt.scene,camera);
     if(autoQ&&quality>0){fT+=(raw-fT)*.08;fN++;if(fN>90&&fT>.05){applyQ(quality-1);fN=0;fT=.02}}}
+  if(def.chrome)def.chrome(W);
   render();requestAnimationFrame(t=>{last=t;frame(t)});
   if(/[?&]bare=1/.test(location.search))document.body.classList.add('bare');
   window.__world=W;W.dbg=()=>({st:W.stationId,flying:!!flight,cam:camera.position.toArray().map(v=>+v.toFixed(2)),dir:camera.getWorldDirection(V(0,0,0)).toArray().map(v=>+v.toFixed(2)),orb:orb.on});

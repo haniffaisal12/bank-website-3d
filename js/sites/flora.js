@@ -1,7 +1,7 @@
 /* Data situs FLORA (fiktif) — toko tanaman hias. */
 export default {
  id:'flora',type:'shop',frames:7,
- fonts:'https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Nunito+Sans:wght@400;600;700&display=swap',
+ fonts:'https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Nunito+Sans:wght@400;600;700&family=Caveat:wght@600;700&display=swap',
  theme:{mode:'light',bg:'#f6f3ea',bg2:'#ece8da',ink:'#1d2a1c',mut:'#5d6c58',acc:'#3f8f2f',accInk:'#ffffff',line:'#d8d3bf',card:'#fffdf6',fh:"'Fraunces',Georgia,serif",fb:"'Nunito Sans',system-ui,sans-serif",radius:'14px'},
  brand:{name:'FLORA',mark:'F',tagline:'Tanaman hias sehat dari rumah kaca kami, dikirim dengan aman sampai pot di rumah Anda.',email:'halo@flora.example',phone:'(022) 555-0123',address:'Jl. Kebun Raya 7, Lembang, Bandung Barat'},
  promo:'Garansi tanaman hidup 14 hari · Gratis ongkir di atas Rp 500 ribu',

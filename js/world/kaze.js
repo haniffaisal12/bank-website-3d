@@ -4,7 +4,7 @@ import {T,V,Box,RBox,Cyl,mesh} from '../core.js';
 import {world} from './world.js';
 import {label,shelf,pedestal,counter,wireShop} from './kit.js';
 import * as shop from './shop.js';
-import {esc} from '../site/ui.js';
+import {esc,toast} from '../site/ui.js';
 import site from '../sites/kaze.js';
 import {concept,buildShoe} from '../concepts/kaze.js';
 
@@ -59,28 +59,43 @@ function setup(rt,W){const sc=rt.scene,w=rt.world;
 }
 const btn=(h,t,g)=>'<a class="wbtn'+(g?' ghost':'')+'" href="#'+h+'">'+t+'</a>';
 const PAL=['Cyber','Sunset','Jade'];
-function home(){const h=site.home;return{st:'gang',kind:'hero',title:'Beranda',html:'<p class="wk">'+esc(h.eyebrow)+'</p><h1 class="wh big">'+h.title+'</h1><p class="wl">'+esc(h.sub)+'</p>'
-  +'<div class="wrow">'+btn('/toko','Belanja drop')+btn('/tentang','Mulai tur',1)+'</div><ul class="wusp">'+site.usp.map(u=>'<li><b>'+esc(u[0])+'</b><span>'+esc(u[1])+'</span></li>').join('')+'</ul><p class="wtiny">Gulir atau tekan › untuk menyusuri gang. Seret layar untuk melihat sekeliling 360°.</p>'}}
-function about(W){const a=site.about;return{st:'neon',title:'Cerita',html:'<p class="wk">Di bawah neon</p><h1 class="wh">'+esc(a.title)+'</h1><p class="wl">'+esc(a.sub)+'</p>'+a.paras.map(p=>'<p>'+esc(p)+'</p>').join('')
+/* ---------- pengalaman "drop": produk dulu, hitung mundur, dok bawah, ukuran wajib, keranjang laci ---------- */
+const ORDER=['air-kaze-02','neo-runner','jaket-hujan','kaus-kaki','tali-reflektif','kit-perawatan'];
+function nextDrop(){const d=new Date();d.setHours(20,0,0,0);const add=(5-d.getDay()+7)%7||(new Date()>d?7:0);d.setDate(d.getDate()+add);return d}
+function chrome(W){const c=document.createElement('div');c.id='kzCount';c.innerHTML='<span>DROP 03</span><b id="kzT">--</b>';document.querySelector('.wbar').appendChild(c);
+  const tgt=nextDrop();const tick=()=>{const s=Math.max(0,(tgt-Date.now())/1000|0),p=n=>String(n).padStart(2,'0');document.getElementById('kzT').textContent=p(s/86400|0)+'h '+p(s%86400/3600|0)+'j '+p(s%3600/60|0)+'m '+p(s%60)+'d'};tick();setInterval(tick,1000);
+  const m=document.createElement('div');m.id='kzMarq';m.setAttribute('aria-hidden','true');m.innerHTML='<div id="kzMq"></div>';document.body.appendChild(m);W.marq=t=>{document.getElementById('kzMq').textContent=Array(6).fill(t).join('  ✦  ')};W.marq('KAZE 風 SNEAKER LAB')}
+function home(){const h=site.home;return{st:'gang',kind:'hero',title:'Drop 02',html:'<div class="kz-hero"><p class="wk">'+esc(h.eyebrow)+'</p><h1 class="wh big">Air Kaze 02</h1><p class="wl">'+esc(h.sub)+'</p>'
+  +'<div class="wrow">'+btn('/drop/air-kaze-02','Masuk drop →')+btn('/tentang','Cerita gang',1)+'</div></div><ul class="kz-usp">'+site.usp.map(u=>'<li><b>'+esc(u[0])+'</b><span>'+esc(u[1])+'</span></li>').join('')+'</ul>'}}
+function about(W){const a=site.about;return{st:'neon',title:'Cerita',kind:'drawer',html:'<p class="wk">Di bawah neon</p><h1 class="wh">'+esc(a.title)+'</h1><p class="wl">'+esc(a.sub)+'</p>'+a.paras.map(p=>'<p>'+esc(p)+'</p>').join('')
   +'<div class="wseg" role="group" aria-label="Palet neon">'+PAL.map((x,i)=>'<button data-act="neon" data-i="'+i+'" aria-pressed="'+((W.pal||0)===i)+'" style="--sw:'+['#00e5ff','#ff8a3d','#5bffb0'][i]+'"><i></i>'+x+'</button>').join('')+'</div>'
-  +site.testi.slice(0,2).map(t=>'<blockquote>“'+esc(t[0])+'” <cite>'+esc(t[1])+', '+esc(t[2])+'</cite></blockquote>').join('')+'<div class="wrow">'+btn('/drop','Masuk ke toko')+'</div>'}}
-function drop(W){return{st:'dalam',title:'Drop 02',html:'<p class="wk">Tiga pedestal</p><h1 class="wh">Drop 02: Air Kaze</h1><p class="wl">Tiga colorway berputar di pedestal. Ganti colorway atau percepat putaran, lalu lihat detailnya 360°.</p>'
-  +'<div class="wrow"><button class="wbtn ghost" data-act="way">Ganti colorway</button><button class="wtg" data-act="spin" aria-pressed="'+!!W.spin+'"><i></i>Putaran: <b>'+(W.spin?'Cepat':'Santai')+'</b></button></div>'
-  +'<div class="wmini">'+['Cyber','Sunset','Jade'].map(c=>'<a href="#/produk/air-kaze-02?Colorway='+c+'"><img src="'+(W.thumb?W.thumb('air-kaze-02',{Colorway:c,Ukuran:'40'}):'')+'" alt=""><span>Air Kaze 02 · '+c+'<b>'+shop.rp(1890000)+'</b></span></a>').join('')+'</div>'}}
-const def={site,concept,stations,tour,audio:true,noglImg:'06',
-  nav:[['Beranda','/'],['Cerita','/tentang'],['Drop 02','/drop'],['Toko','/toko'],['Lacak','/lacak'],['Kontak','/kontak']],
+  +site.testi.slice(0,2).map(t=>'<blockquote>“'+esc(t[0])+'” <cite>'+esc(t[1])+', '+esc(t[2])+'</cite></blockquote>').join('')+'<div class="wrow">'+btn('/drop/air-kaze-02','Masuk drop →')+'</div>'}}
+/* panel produk ala halaman drop: nama besar, colorway, kisi ukuran wajib, tombol COP */
+function dropProduct(W,id,q){const p=shop.P(site,id);if(!p)return null;const o=shop.product(site,W,id,q);W.sizeChosen=!(p.variants||[]).some(g=>g.key==='Ukuran'||g.key==='Panjang');const i=ORDER.indexOf(id),prev=ORDER[(i+ORDER.length-1)%ORDER.length],next=ORDER[(i+1)%ORDER.length];
+  const vr=W.sel.vr;const groups=(p.variants||[]).map(g=>'<fieldset class="wvar kz-'+(g.key==='Ukuran'||g.key==='Panjang'?'size':'cw')+'"><legend>'+esc(g.label)+': <b>'+((g.key==='Ukuran'||g.key==='Panjang')?'pilih':esc(vr[g.key]))+'</b></legend><div>'
+    +g.values.map(o=>'<button type="button" class="'+((g.key!=='Ukuran'&&g.key!=='Panjang'&&o.v===vr[g.key])?'on':'')+'" data-act="var" data-key="'+esc(g.key)+'" data-v="'+esc(o.v)+'">'+(o.sw?'<i style="background:'+o.sw+'"></i>':'')+esc(o.v)+'</button>').join('')+'</div></fieldset>').join('');
+  W.marq(p.name.toUpperCase()+' ✦ '+(p.badge||'KAZE 風'));
+  return{st:'pajang',kind:'dock',title:p.name,orbit:o&&null,html:'<div class="kz-dock"><a class="kz-arr" href="#/drop/'+prev+'" aria-label="Sebelumnya">‹</a><div class="kz-id"><p class="wk">'+String(i+1).padStart(2,'0')+' / '+String(ORDER.length).padStart(2,'0')+' · '+esc(site.categories.find(c=>c.id===p.cat).name)+'</p><h1 class="wh">'+esc(p.name)+'</h1><p class="kz-pr" id="pPrice">'+shop.rp(p.price)+'</p><p class="wtiny">'+esc(p.short)+'</p></div>'
+    +'<div class="kz-opt">'+groups+'<div class="kz-buy"><button class="wbtn" data-act="add">Cop sekarang</button><button class="wbtn ghost" data-act="buy">Beli langsung</button></div><details><summary>Detail & spesifikasi</summary><p>'+esc(p.desc)+'</p><table>'+p.spec.map(x=>'<tr><th>'+esc(x[0])+'</th><td>'+esc(x[1])+'</td></tr>').join('')+'</table></details></div>'
+    +'<a class="kz-arr" href="#/drop/'+next+'" aria-label="Berikutnya">›</a></div><p class="kz-hint">Seret sepatu untuk memutar 360° · ‹ › untuk barang berikutnya</p>'}}
+const def={site,concept,stations,tour,audio:true,noglImg:'06',layout:'drop',avoid:['#wp'],chrome,
+  nav:[['Drop','/drop/air-kaze-02'],['Meja','/toko'],['Cerita','/tentang'],['Lacak','/lacak'],['Kontak','/kontak']],
   setup,
-  route(r,W){const a=r.seg[0];if(W.centerShoe)W.centerShoe(a!=='produk');
-    if(!a)return home();if(a==='tentang')return about(W);if(a==='drop')return drop(W);
-    if(a==='toko')return Object.assign(shop.catalog(site,W,r,{title:'Meja drop',sub:'Klik produk di meja, atau pilih di bawah. Setiap produk bisa diputar 360° di pedestal tengah.'}),{st:'meja'});
-    if(a==='produk'){const o=shop.product(site,W,r.seg[1],r.q);if(!o)return null;let tg=[0,1.3,-16],sz=.6;if(W.showProduct){tg=W.showProduct(W.sel.pid,W.sel.vr);sz=W.orbitHint.size}return Object.assign(o,{st:'pajang',kind:'product',orbit:{target:tg,az:.5,el:.22,d:Math.max(1.55,sz*2+.4),dmin:Math.max(1.4,sz),dmax:4}})}
-    if(a==='keranjang')return Object.assign(shop.cartPanel(site,W),{st:'kasir'});if(a==='checkout')return Object.assign(shop.checkout(site,W),{st:'kasir'});
-    if(a==='pesanan')return Object.assign(shop.order(site,W,decodeURIComponent(r.seg[1]||'')),{st:'kasir'});if(a==='lacak')return Object.assign(shop.track(site,W,r),{st:'kasir'});
-    if(a==='kontak'||a==='faq')return Object.assign(shop.contact(site,W,'Kaca etalase'),{st:'kaca'});return null},
+  route(r,W){const a=r.seg[0];if(W.centerShoe)W.centerShoe(!(a==='produk'||a==='drop'));if(W.marq&&a!=='produk'&&a!=='drop')W.marq('KAZE 風 SNEAKER LAB');
+    if(!a)return home();if(a==='tentang')return about(W);
+    if(a==='drop'||a==='produk'){const id=r.seg[1]||'air-kaze-02';const o=dropProduct(W,id,r.q);if(!o)return null;let tg=[0,1.3,-16],sz=.6;if(W.showProduct){tg=W.showProduct(W.sel.pid,W.sel.vr);sz=W.orbitHint.size}o.orbit={target:tg,az:.5,el:.18,d:Math.max(1.7,sz*2.1+.4),dmin:Math.max(1.4,sz),dmax:4.2};return o}
+    if(a==='toko')return Object.assign(shop.catalog(site,W,r,{title:'Meja drop',sub:'Semua barang drop ini. Klik untuk melihatnya di pedestal tengah.'}),{st:'meja',kind:'drawer'});
+    if(a==='keranjang')return Object.assign(shop.cartPanel(site,W),{st:'kasir',kind:'drawer'});if(a==='checkout')return Object.assign(shop.checkout(site,W),{st:'kasir',kind:'drawer'});
+    if(a==='pesanan')return Object.assign(shop.order(site,W,decodeURIComponent(r.seg[1]||'')),{st:'kasir',kind:'drawer'});if(a==='lacak')return Object.assign(shop.track(site,W,r),{st:'kasir',kind:'drawer'});
+    if(a==='kontak'||a==='faq')return Object.assign(shop.contact(site,W,'Kaca etalase'),{st:'kaca',kind:'drawer'});return null},
   pickAction(id,W){if(id==='way'){W.rt.actions.way();W.sfx('cycle');return true}},
-  act(t,e,W){const a=t.dataset.act;if(!W.rt&&a!=='quick')return shop.act(site,W,t);
+  act(t,e,W){const a=t.dataset.act;
+    if((a==='add'||a==='buy')&&!W.sizeChosen){toast('Pilih ukuran dulu.','bad');const f=document.querySelector('.kz-size');if(f){f.classList.remove('shake');void f.offsetWidth;f.classList.add('shake')}W.sfx('off');return}
+    if(a==='var'&&(t.dataset.key==='Ukuran'||t.dataset.key==='Panjang'))W.sizeChosen=true;
+    if(!W.rt&&!/^(quick|var|qm|qp|add|buy|cq|crm)$/.test(a))return;
     if(a==='neon'){W.pal=+t.dataset.i;W.rt.actions.neon(W.pal);document.querySelectorAll('[data-act=neon]').forEach(b=>b.setAttribute('aria-pressed',b===t));W.sfx('zap')}
     else if(a==='way'){W.rt.actions.way();W.sfx('cycle')}else if(a==='spin'){W.spin=!W.spin;W.rt.actions.spin(W.spin);t.setAttribute('aria-pressed',W.spin);t.querySelector('b').textContent=W.spin?'Cepat':'Santai';W.sfx('engine')}
+    else if(a==='add'){shop.act(site,W,t);location.hash='/keranjang'}
     else shop.act(site,W,t)},
   onCart(W){W.onCartChange&&W.onCartChange()},
   refresh(r,W){if(r.seg[0]==='keranjang')W.render()}};

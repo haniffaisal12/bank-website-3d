@@ -17,7 +17,7 @@ export function makeThumb(model,opts){opts=opts||{};let TR=null,TS,TC;const cach
   return function(pid,vr){const key=pid+JSON.stringify(vr||{});if(cache[key])return cache[key];
     try{if(!TR){TR=new T.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});TR.setSize(320,320,false);TR.toneMapping=T.ACESFilmicToneMapping;TR.toneMappingExposure=opts.exp||1.05;TR.outputColorSpace=T.SRGBColorSpace;
         TS=new T.Scene();const pm=new T.PMREMGenerator(TR);TS.environment=pm.fromScene(new RoomEnvironment(),.04).texture;TS.environmentIntensity=.75;
-        const k=new T.DirectionalLight(0xffffff,2.2);k.position.set(1.2,2,2);TS.add(k);const r=new T.DirectionalLight(opts.rim||0xff9a3a,1.4);r.position.set(-2,1,-1.5);TS.add(r);TC=new T.PerspectiveCamera(26,1,.01,200)}
+        const k=new T.DirectionalLight(0xffffff,2.2);k.position.set(1.2,2,2);TS.add(k);TS.add(new T.HemisphereLight(0xffffff,0x9a9080,1.1));const f=new T.DirectionalLight(0xffffff,.9);f.position.set(-1.5,1,2);TS.add(f);const r=new T.DirectionalLight(opts.rim||0xff9a3a,1.4);r.position.set(-2,1,-1.5);TS.add(r);TC=new T.PerspectiveCamera(26,1,.01,200)}
       const m=model(pid,vr);m.rotation.y=opts.rot==null?-.45:opts.rot;TS.add(m);m.updateWorldMatrix(true,true);const bb=new T.Box3().setFromObject(m);if(bb.isEmpty()){TS.remove(m);return 'data:image/gif;base64,R0lGODlhAQABAAAAACw='}const c=bb.getCenter(V(0,0,0)),sz=bb.getSize(V(0,0,0)),r=Math.max(sz.x,sz.y,sz.z);
       TC.position.set(c.x+r*.55,c.y+r*.55,c.z+r*2.3);TC.near=r*.05;TC.far=r*20;TC.updateProjectionMatrix();TC.lookAt(c);TR.render(TS,TC);const url=TR.domElement.toDataURL('image/png');TS.remove(m);return cache[key]=url}
     catch(e){return 'data:image/gif;base64,R0lGODlhAQABAAAAACw='}}}

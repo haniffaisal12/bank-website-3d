@@ -54,7 +54,7 @@ function setup(rt,W){RT=rt;const sc=rt.scene,dark=new T.MeshStandardMaterial({co
   const l2=new T.PointLight(0xffffff,20,8,2);l2.position.set(13,3.2,-33);sc.add(l2);
   sc.userData.aoDirty=true;
   W.pins=[{pos:[0,6,-10],label:'Showroom VOLT',sub:'Masuk',href:'#/tentang',at:['plaza']},{pos:[0,2.8,-14],label:'Lorong cahaya',href:'#/kontak',at:['pintu']},
-    {pos:[0,3.3,-44],label:'VOLT X1',sub:'Lihat 360°',kind:'prod',href:'#/produk/volt-x1',at:['lorong','aula','rak','pajang','kasir']},{pos:[-21,2.6,-40],label:'Dinding aksesori',sub:'Katalog',href:'#/toko',at:['aula','mobil','kasir','pajang']},
+    {pos:[0,3.3,-44],label:'VOLT X1',sub:'Lihat 360°',kind:'prod',href:'#/produk/volt-x1',at:['lorong','aula','rak','pajang','kasir']},{pos:[-21,2.6,-40],label:'Dinding aksesori',sub:'Katalog',href:'#/toko',at:['aula','kasir','pajang']},
     {pos:[-12,2.6,-32],label:'Alas aksesori 360°',href:'#/produk/wallbox',at:['aula','rak','kasir']},{pos:[14.8,2,-34],label:'Meja konsultan',sub:'Keranjang',href:'#/keranjang',at:['aula','mobil','rak','pajang']},{pos:[0,2.6,-26],label:'Lorong',sub:'Kontak',href:'#/kontak',at:['aula','rak','kasir']}];
   wireShop(W,{site,model,shelves:[sh],ped,counter:ct,thumb:{rim:0xe8ff3a}});
   // varian VOLT X1 langsung mengubah mobil di piringan
@@ -63,32 +63,52 @@ function setup(rt,W){RT=rt;const sc=rt.scene,dark=new T.MeshStandardMaterial({co
 }
 const btn=(h,t,g)=>'<a class="wbtn'+(g?' ghost':'')+'" href="#'+h+'">'+t+'</a>';
 const PN=['Merah Api','Putih Mutiara','Biru Malam','Hijau Hutan','Abu Titanium'],PC=['#c4102c','#f3f4f6','#0a1c4a','#0d3a2b','#8a9096'];
-function home(){const h=site.home;return{st:'plaza',kind:'hero',title:'Beranda',html:'<p class="wk">'+esc(h.eyebrow)+'</p><h1 class="wh big">'+h.title+'</h1><p class="wl">'+esc(h.sub)+'</p>'
-  +'<div class="wrow">'+btn('/konfigurator','Konfigurasi VOLT X1')+btn('/tentang','Mulai tur',1)+'</div><ul class="wusp">'+site.usp.map(u=>'<li><b>'+esc(u[0])+'</b><span>'+esc(u[1])+'</span></li>').join('')+'</ul><p class="wtiny">Gulir atau tekan › untuk masuk ke showroom. Seret layar untuk melihat sekeliling 360°.</p>'}}
+/* ---------- pengalaman "konfigurator": langkah bertahap di dok bawah, harga berjalan, kamera mengikuti langkah ---------- */
+const STEPS=[['warna','Warna'],['velg','Velg'],['baterai','Baterai'],['aksesori','Aksesori'],['ringkasan','Ringkasan']];
+const VIEW={warna:{az:.9,el:.16,d:7.2},velg:{az:1.45,el:.04,d:4.8},baterai:{az:2.3,el:.62,d:7.6},aksesori:{az:3.3,el:.2,d:7.4},ringkasan:{az:.45,el:.14,d:6.8}};
+const X1=()=>shop.P(site,'volt-x1'),ACC=['wallbox','kabel-portabel','velg-sport','ppf'];
+const cfg=W=>W.cfg2||(W.cfg2={Warna:'Merah Api',Velg:'Aero 20"',Baterai:'Standar 82 kWh',acc:new Set()});
+const delta=(key,v)=>{const g=X1().variants.find(x=>x.key===key),o=g&&g.values.find(x=>x.v===v);return o&&o.delta||0};
+const total=c=>X1().price+delta('Velg',c.Velg)+delta('Baterai',c.Baterai)+[...c.acc].reduce((a,id)=>a+shop.P(site,id).price,0);
+function chrome(W){const d=document.createElement('section');d.id='voDock';d.hidden=true;d.setAttribute('aria-label','Konfigurator');document.body.appendChild(d);
+  const pr=document.createElement('div');pr.id='voPrice';pr.innerHTML='<span>VOLT X1</span><b id="voP">'+shop.rp(X1().price)+'</b><em>booking fee Rp 5 jt</em>';document.querySelector('.wbar').appendChild(pr)}
+function drawDock(W,step){const c=cfg(W),d=document.getElementById('voDock');if(!d)return;const i=STEPS.findIndex(x=>x[0]===step);let opts='';
+  if(step==='warna')opts=PN.map((x,k)=>'<button class="vo-sw'+(c.Warna===x?' on':'')+'" data-act="cfg" data-k="Warna" data-v="'+x+'"><i style="background:'+PC[k]+'"></i><span>'+x+'</span></button>').join('');
+  else if(step==='velg'||step==='baterai'){const g=X1().variants.find(x=>x.key===(step==='velg'?'Velg':'Baterai'));opts=g.values.map(o=>'<button class="vo-card'+(c[g.key]===o.v?' on':'')+'" data-act="cfg" data-k="'+g.key+'" data-v="'+esc(o.v)+'"><b>'+esc(o.v)+'</b><span>'+(o.delta?'+'+shop.rp(o.delta):'Termasuk')+'</span><em>'+(step==='baterai'?(o.delta?'720 km WLTP':'620 km WLTP'):(o.delta?'Tempa, lebih ringan 11 kg':'Aerodinamis, hemat energi'))+'</em></button>').join('')}
+  else if(step==='aksesori')opts=ACC.map(id=>{const p=shop.P(site,id),on=c.acc.has(id);return '<button class="vo-acc'+(on?' on':'')+'" data-act="acc" data-id="'+id+'" aria-pressed="'+on+'"><img src="'+(W.thumb?W.thumb(id,shop.defVar(p)):'')+'" alt=""><b>'+esc(p.name)+'</b><span>'+shop.rp(p.price)+'</span></button>'}).join('');
+  else opts='<div class="vo-sum"><div><span>Warna</span><b>'+c.Warna+'</b></div><div><span>Velg</span><b>'+esc(c.Velg)+'</b></div><div><span>Baterai</span><b>'+c.Baterai+'</b></div><div><span>Aksesori</span><b>'+(c.acc.size?[...c.acc].map(id=>shop.P(site,id).name).join(', '):'—')+'</b></div><div class="tt"><span>Total on the road</span><b>'+shop.rp(total(c))+'</b></div></div><button class="wbtn" data-act="reserve">Reservasi · bayar booking fee Rp 5 jt</button>';
+  d.innerHTML='<ol class="vo-steps">'+STEPS.map((x,k)=>'<li class="'+(k<i?'done':k===i?'cur':'')+'"><a href="#/rakit/'+x[0]+'"><b>'+(k+1)+'</b>'+x[1]+'</a></li>').join('')+'</ol><div class="vo-opts">'+opts+'</div>'
+   +'<div class="vo-nav">'+(i>0?'<a class="wbtn ghost sm" href="#/rakit/'+STEPS[i-1][0]+'">‹ '+STEPS[i-1][1]+'</a>':'<span></span>')+(i<STEPS.length-1?'<a class="wbtn sm" href="#/rakit/'+STEPS[i+1][0]+'">'+STEPS[i+1][1]+' ›</a>':'')+'</div>';
+  document.getElementById('voP').textContent=shop.rp(total(c))}
+function rakit(W,step){if(!VIEW[step])step='warna';const c=cfg(W);W.applyCar&&W.applyCar(c);const v=VIEW[step];const p=X1();
+  const info={warna:['Lima warna, satu bodi','Cat multi-lapis dengan pernis keramik. Klik mobil untuk mengganti warna, atau pilih di dok bawah.'],velg:['Aero atau Sport','Aero hemat energi; Sport tempa lebih ringan dan tajam saat menikung.'],
+    baterai:['Jarak yang Anda butuhkan','Standar 82 kWh cukup untuk harian; Long Range 100 kWh untuk lintas kota.'],aksesori:['Lengkapi sejak awal','Wallbox, kabel portabel, velg, dan pelindung cat dikirim bersama mobil.'],ringkasan:['Siap dipesan','Booking fee dapat dikembalikan penuh sebelum produksi dimulai.']}[step];
+  return{st:'mobil',kind:'spec',title:'Rakit VOLT X1',orbit:{target:CAR,az:v.az,el:v.el,d:v.d,dmin:4.4,dmax:11},
+    html:'<p class="wk">Langkah '+(STEPS.findIndex(x=>x[0]===step)+1)+' dari 5</p><h1 class="wh">'+info[0]+'</h1><p class="wl">'+info[1]+'</p><table>'+p.spec.map(x=>'<tr><th>'+esc(x[0])+'</th><td>'+esc(x[1])+'</td></tr>').join('')+'</table>'
+     +'<div class="wrow"><button class="wtg" data-act="lights" aria-pressed="'+!!(W.cfg&&W.cfg.l)+'"><i></i>Lampu depan</button><button class="wtg" data-act="spin" aria-pressed="'+!!(W.cfg&&W.cfg.s)+'"><i></i>Hentikan putaran</button></div><p class="wtiny">Seret untuk mengitari mobil 360°.</p>',step}}
+function home(){const h=site.home;return{st:'plaza',kind:'hero',title:'VOLT X1',html:'<p class="wk">'+esc(h.eyebrow)+'</p><h1 class="wh big">VOLT X1</h1><p class="wl">'+esc(h.sub)+'</p>'
+  +'<div class="vo-kpi">'+site.usp.map(u=>'<div><b>'+esc(u[0])+'</b><span>'+esc(u[1])+'</span></div>').join('')+'</div><div class="wrow">'+btn('/rakit/warna','Rakit milik Anda →')+btn('/tentang','Cerita VOLT',1)+'</div>'}}
 function about(){const a=site.about;return{st:'pintu',title:'Cerita',html:'<p class="wk">Pintu showroom</p><h1 class="wh">'+esc(a.title)+'</h1><p class="wl">'+esc(a.sub)+'</p>'+a.paras.map(p=>'<p>'+esc(p)+'</p>').join('')
-  +'<h3>Yang kami pegang</h3>'+a.values.map(v=>'<p><b>'+esc(v[0])+'.</b> '+esc(v[1])+'</p>').join('')+site.testi.slice(0,2).map(t=>'<blockquote>“'+esc(t[0])+'” <cite>'+esc(t[1])+', '+esc(t[2])+'</cite></blockquote>').join('')+'<div class="wrow">'+btn('/konfigurator','Masuk ke aula')+'</div>'}}
-function konfig(W){const c=W.cfg||{p:0,r:false,l:false,s:false};W.cfg=c;return{st:'aula',title:'Konfigurator',html:'<p class="wk">Aula konfigurator</p><h1 class="wh">Rakit VOLT X1 Anda</h1><p class="wl">Pilihan langsung tampil di mobil. Lanjutkan ke halaman produk untuk memutar 360° dan memesan.</p>'
-  +'<fieldset class="wvar"><legend>Warna cat: <b id="cfgP">'+PN[c.p]+'</b></legend><div>'+PN.map((x,i)=>'<button type="button" data-act="paint" data-i="'+i+'" class="'+(i===c.p?'on':'')+'" aria-pressed="'+(i===c.p)+'"><i style="background:'+PC[i]+'"></i>'+x+'</button>').join('')+'</div></fieldset>'
-  +'<div class="wrow"><button class="wtg" data-act="rims" aria-pressed="'+c.r+'"><i></i>Velg: <b>'+(c.r?'Sport 21"':'Aero 20"')+'</b></button><button class="wtg" data-act="lights" aria-pressed="'+c.l+'"><i></i>Lampu depan</button><button class="wtg" data-act="spin" aria-pressed="'+c.s+'"><i></i>Hentikan putaran</button></div>'
-  +'<div class="wstat"><div><b>620 km</b><span>jarak WLTP</span></div><div><b>4,9 s</b><span>0–100 km/jam</span></div><div><b>22 mnt</b><span>10–80%</span></div></div>'
-  +'<div class="wrow"><a class="wbtn" id="cfgGo" href="#/produk/volt-x1?Warna='+encodeURIComponent(PN[c.p])+'&Velg='+encodeURIComponent(c.r?'Sport 21"':'Aero 20"')+'">Lihat 360° &amp; pesan</a>'+btn('/toko','Aksesori',1)+'</div>'}}
-const def={site,concept,stations,tour,audio:true,noglImg:'06',
-  nav:[['Beranda','/'],['Cerita','/tentang'],['Konfigurator','/konfigurator'],['VOLT X1','/produk/volt-x1'],['Aksesori','/toko'],['Lacak','/lacak'],['Kontak','/kontak']],
+  +'<h3>Yang kami pegang</h3>'+a.values.map(v=>'<p><b>'+esc(v[0])+'.</b> '+esc(v[1])+'</p>').join('')+site.testi.slice(0,2).map(t=>'<blockquote>“'+esc(t[0])+'” <cite>'+esc(t[1])+', '+esc(t[2])+'</cite></blockquote>').join('')+'<div class="wrow">'+btn('/rakit/warna','Rakit VOLT X1')+'</div>'}}
+const def={site,concept,stations,tour,audio:true,noglImg:'06',layout:'config',avoid:['#wp','#voDock'],chrome,
+  nav:[['Rakit','/rakit/warna'],['Aksesori','/toko'],['Cerita','/tentang'],['Lacak','/lacak'],['Kontak','/kontak']],
   setup,
   route(r,W){const a=r.seg[0];
-    if(!a)return home();if(a==='tentang')return about();if(a==='konfigurator')return konfig(W);
-    if(a==='toko')return Object.assign(shop.catalog(site,W,r,{title:'Dinding aksesori',sub:'Pengisian daya dan aksesori. VOLT X1 sendiri bisa dikitari 360° di piringan putar.'}),{st:'rak'});
-    if(a==='produk'){const id=r.seg[1];const o=shop.product(site,W,id,r.q);if(!o)return null;
-      if(id==='volt-x1'){W.applyCar&&W.applyCar(W.sel.vr);o.html=o.html.replace('Seret produk untuk memutar 360°','Seret untuk mengitari mobil 360°');return Object.assign(o,{st:'mobil',kind:'product',orbit:{target:CAR,az:.9,el:.16,d:7.2,dmin:4.6,dmax:11}})}
-      let tg=[-12,1.5,-32],sz=.6;if(W.showProduct){tg=W.showProduct(W.sel.pid,W.sel.vr);sz=W.orbitHint.size}return Object.assign(o,{st:'pajang',kind:'product',orbit:{target:tg,az:.7,el:.2,d:sz*1.7+.5,dmin:sz,dmax:sz*4}})}
-    if(a==='keranjang')return Object.assign(shop.cartPanel(site,W),{st:'kasir'});if(a==='checkout')return Object.assign(shop.checkout(site,W),{st:'kasir'});
+    if(!a)return home();if(a==='tentang')return about();
+    if(a==='rakit'||a==='konfigurator'||(a==='produk'&&r.seg[1]==='volt-x1')){const c=cfg(W);if(a==='produk')['Warna','Velg','Baterai'].forEach(k=>{const v=r.q.get(k);if(v)c[k]=v});return rakit(W,a==='rakit'?r.seg[1]:'warna')}
+    if(a==='toko')return Object.assign(shop.catalog(site,W,r,{title:'Dinding aksesori',sub:'Pengisian daya dan aksesori. Bisa juga ditambahkan di langkah 4 konfigurator.'}),{st:'rak'});
+    if(a==='produk'){const id=r.seg[1];const o=shop.product(site,W,id,r.q);if(!o)return null;let tg=[-12,1.5,-32],sz=.6;if(W.showProduct){tg=W.showProduct(W.sel.pid,W.sel.vr);sz=W.orbitHint.size}return Object.assign(o,{st:'pajang',kind:'product',orbit:{target:tg,az:.7,el:.2,d:sz*1.7+.5,dmin:sz,dmax:sz*4}})}
+    if(a==='keranjang')return Object.assign(shop.cartPanel(site,W),{st:'kasir'});if(a==='checkout'){const o=shop.checkout(site,W);o.html=o.html.replace('<h1 class="wh">Checkout</h1>','<h1 class="wh">Reservasi</h1><p class="wl">Yang dibayar sekarang hanya booking fee Rp 5.000.000 (simulasi); sisanya saat serah terima.</p>');return Object.assign(o,{st:'kasir'})}
     if(a==='pesanan')return Object.assign(shop.order(site,W,decodeURIComponent(r.seg[1]||'')),{st:'kasir'});if(a==='lacak')return Object.assign(shop.track(site,W,r),{st:'kasir'});
     if(a==='kontak'||a==='faq')return Object.assign(shop.contact(site,W,'Lorong cahaya'),{st:'lorong'});return null},
-  pickAction(id,W){if(id==='paint'){const c=W.cfg||(W.cfg={p:0,r:false,l:false,s:false});c.p=(c.p+1)%5;W.rt.actions.paint(c.p);W.sfx('cycle');if(W.stationId==='aula')W.render();return true}},
-  act(t,e,W){const a=t.dataset.act,c=W.cfg||(W.cfg={p:0,r:false,l:false,s:false});if(!W.rt&&/^(paint|rims|lights|spin)$/.test(a))return;
-    if(a==='paint'){c.p=+t.dataset.i;W.rt.actions.paint(c.p);W.sfx('cycle');W.render()}
-    else if(a==='rims'){c.r=!c.r;W.rt.actions.rims(c.r);W.sfx('cycle');W.render()}
-    else if(a==='lights'){c.l=!c.l;W.rt.actions.lights(c.l);t.setAttribute('aria-pressed',c.l);W.sfx(c.l?'on':'off')}
+  onRoute(r,out,W){const d=document.getElementById('voDock');d.hidden=!out.step;if(out.step)drawDock(W,out.step);else document.getElementById('voP').textContent=shop.rp(total(cfg(W)))},
+  pickAction(id,W){if(id==='paint'){const c=cfg(W);c.Warna=PN[(PN.indexOf(c.Warna)+1)%5];W.applyCar(c);W.sfx('cycle');if(document.querySelector('#voDock:not([hidden])'))drawDock(W,W.parse().seg[1]||'warna');return true}},
+  act(t,e,W){const a=t.dataset.act,c=W.cfg||(W.cfg={p:0,r:false,l:false,s:false}),k=cfg(W);
+    if(a==='cfg'){k[t.dataset.k]=t.dataset.v;W.applyCar&&W.applyCar(k);W.sfx('cycle');W.kick(.8);drawDock(W,W.parse().seg[1]||'warna');return}
+    if(a==='acc'){const id=t.dataset.id;k.acc.has(id)?k.acc.delete(id):k.acc.add(id);W.sfx('coin');drawDock(W,'aksesori');return}
+    if(a==='reserve'){const v={Warna:k.Warna,Velg:k.Velg,Baterai:k.Baterai};shop.cart.add(site.id,'volt-x1',v,1);k.acc.forEach(id=>shop.cart.add(site.id,id,shop.defVar(shop.P(site,id)),1));W.sfx('coin');location.hash='/checkout';return}
+    if(!W.rt&&/^(lights|spin)$/.test(a))return;
+    if(a==='lights'){c.l=!c.l;W.rt.actions.lights(c.l);t.setAttribute('aria-pressed',c.l);W.sfx(c.l?'on':'off')}
     else if(a==='spin'){c.s=!c.s;W.rt.actions.spin(c.s);t.setAttribute('aria-pressed',c.s);W.sfx('engine')}
     else shop.act(site,W,t)},
   onCart(W){W.onCartChange&&W.onCartChange()},

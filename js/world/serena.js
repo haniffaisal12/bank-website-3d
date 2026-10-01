@@ -8,7 +8,7 @@ import {esc} from '../site/ui.js';
 import site from '../sites/serena.js';
 import {concept} from '../concepts/serena.js';
 
-const VILLAS={'vila-samudra':{t:[11.5,2,-37],az:-.5,d:9.5,price:4800000},'vila-bintang':{t:[20.5,2,-27],az:.9,d:9.5,price:5500000},'vila-karang':{t:[-22,1.8,20],az:1.27,d:10,price:6200000}};
+const VILLAS={'vila-samudra':{t:[11.5,2,-37],az:-.5,d:12,price:4800000},'vila-bintang':{t:[20.5,2,-27],az:1.1,d:12,price:5500000},'vila-karang':{t:[-22,1.8,20],az:1.27,d:12.5,price:6200000}};
 const orbPos=v=>{const c=Math.cos(.25);return[v.t[0]+Math.sin(v.az)*c*v.d,v.t[1]+Math.sin(.25)*v.d,v.t[2]+Math.cos(v.az)*c*v.d]};
 const stations={
   pulau:{label:'Di atas pulau',pos:[0,92,78],look:[0,0,24],audio:'sea',href:'/'},
@@ -36,29 +36,46 @@ function setup(rt,W){const sc=rt.scene;
     {pos:[0,1.8,4.2],label:'Masuk kamar',href:'#/wawasan',at:['pintu']},{pos:[0,1.6,-5],label:'Dek',sub:'Reservasi',href:'#/pesan',at:['kamar']},{pos:[0,1.8,4],label:'Kamar',href:'#/wawasan',at:['dek']},{pos:[0,1.8,5.5],label:'Keluar',sub:'Kontak',href:'#/kontak',at:['kamar']}];
 }
 const btn=(h,t,g)=>'<a class="wbtn'+(g?' ghost':'')+'" href="#'+h+'">'+t+'</a>';
-const nightBtn=W=>'<button class="wtg" data-act="night" aria-pressed="'+!!W.night+'"><i></i>Suasana: <b>'+(W.night?'Malam':'Siang')+'</b></button>';
-function home(W){const h=site.home;return{st:'pulau',kind:'hero',title:'Beranda',html:'<p class="wk">'+esc(h.eyebrow)+'</p><h1 class="wh big">'+h.title+'</h1><p class="wl">'+esc(h.sub)+'</p>'
-  +'<div class="wrow">'+btn('/pesan','Pesan vila')+btn('/tentang','Mulai tur',1)+'</div><div class="wrow">'+nightBtn(W)+'</div>'+C.stats(site)
-  +h.testi.slice(0,2).map(t=>'<blockquote>“'+esc(t[0])+'” <cite>'+esc(t[1])+', '+esc(t[2])+'</cite></blockquote>').join('')+'<p class="wtiny">Gulir atau tekan › untuk turun ke pantai. Seret layar untuk melihat sekeliling 360°.</p>'}}
-const booking=W=>({title:'Reservasi',where:'Dek vila',kind:'kamar',optLabel:'Pilih vila',nights:true,cta:'Kirim reservasi',doneTitle:'Reservasi diterima',sub:'Pilih vila; penanda cahaya menunjukkan letaknya di pulau. Sarapan dan speedboat sudah termasuk.',
+/* ---------- pengalaman "editorial": bab bernomor, kolom teks majalah, bilah pemesanan tetap, indeks bab ---------- */
+const CH=[['/','Pulau','pulau'],['/tentang','Pantai','pantai'],['/layanan','Kolam & spa','kolam'],['/vila','Vila','pantai'],['/wawasan','Kamar','kamar'],['/pesan','Dek','dek']];
+const chOf=p=>{const i=CH.findIndex(c=>c[0]!=='/'&&p.startsWith(c[0]));return p==='/'?0:i<0?-1:i};
+const head=(n,label,title,sub)=>'<div class="se-ch"><b>'+String(n+1).padStart(2,'0')+'</b><span>'+esc(label)+'</span></div><h1 class="wh big">'+title+'</h1>'+(sub?'<p class="se-lede">'+esc(sub)+'</p>':'');
+function home(W){const h=site.home;return{st:'pulau',kind:'hero',title:'Beranda',html:head(0,'Kepulauan Riau','Pulau kecil, <em>ketenangan</em> yang besar.',h.sub)
+  +'<p class="se-drop">'+esc(h.intro.text)+'</p><div class="se-stats">'+h.stats.map(x=>'<div><b>'+esc(x[0])+esc(x[1])+'</b><span>'+esc(x[2])+'</span></div>').join('')+'</div>'
+  +h.testi.slice(0,1).map(t=>'<blockquote class="se-q">“'+esc(t[0])+'”<cite>'+esc(t[1])+' · '+esc(t[2])+'</cite></blockquote>').join('')
+  +'<div class="wrow">'+btn('/tentang','Mulai membaca →',1)+'</div><p class="wtiny">Gulir untuk bab berikutnya · seret layar untuk melihat sekeliling 360°.</p>'}}
+const booking=W=>({title:'Reservasi',where:'06 · Dek',kind:'kamar',optLabel:'Pilih vila',nights:true,cta:'Kirim reservasi',doneTitle:'Reservasi diterima',sub:'Pilih vila; penanda cahaya menunjukkan letaknya di pulau. Sarapan dan speedboat sudah termasuk.',
   options:site.projects.map(p=>({id:p.id,name:p.name,note:p.client,price:VILLAS[p.id].price,priceLabel:'Rp '+(VILLAS[p.id].price/1e6).toLocaleString('id-ID')+' jt/malam'}))});
-const def={site,concept,stations,tour,audio:true,panelLight:true,noglImg:'00',
-  nav:[['Beranda','/'],['Tentang','/tentang'],['Pengalaman','/layanan'],['Vila','/vila'],['Wawasan','/wawasan'],['Reservasi','/pesan'],['Kontak','/kontak']],
+function chrome(W){
+  const today=new Date(Date.now()+864e5).toISOString().slice(0,10);
+  const bar=document.createElement('form');bar.id='seBook';bar.setAttribute('aria-label','Pemesanan cepat');
+  bar.innerHTML='<label><span>Check-in</span><input type="date" name="masuk" min="'+today+'" value="'+today+'"></label><label><span>Malam</span><select name="malam">'+[1,2,3,4,5,6,7].map(n=>'<option'+(n===2?' selected':'')+'>'+n+'</option>').join('')+'</select></label>'
+   +'<label><span>Tamu</span><select name="tamu">'+[1,2,3,4].map(n=>'<option'+(n===2?' selected':'')+' value="'+n+'">'+n+' orang</option>').join('')+'</select></label><label><span>Vila</span><select name="pilih">'+site.projects.map(p=>'<option value="'+p.id+'">'+esc(p.name)+'</option>').join('')+'</select></label><button class="wbtn">Cek ketersediaan</button>';
+  document.body.appendChild(bar);bar.onsubmit=e=>{e.preventDefault();const d=new FormData(bar);location.hash='/pesan?'+new URLSearchParams(d)};
+  bar.pilih.onchange=()=>W.beacon&&W.beacon(bar.pilih.value);
+  const idx=document.createElement('nav');idx.id='seIdx';idx.setAttribute('aria-label','Bab');idx.innerHTML=CH.map((c,i)=>'<a href="#'+c[0]+'" data-i="'+i+'"><b>'+String(i+1).padStart(2,'0')+'</b><span>'+c[1]+'</span></a>').join('');document.body.appendChild(idx);
+  const sun=document.createElement('button');sun.id='seSun';sun.className='wic';sun.setAttribute('aria-label','Siang atau malam');sun.dataset.act='night';sun.innerHTML='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>';
+  document.querySelector('.wact').prepend(sun);
+}
+function setNight(W,v){W.night=v;W.rt&&W.rt.actions.night(v);document.documentElement.classList.toggle('se-night',v);document.querySelectorAll('[data-act=night]').forEach(b=>{b.setAttribute('aria-pressed',v);const t=b.querySelector('b');if(t)t.textContent=v?'Malam':'Siang'});W.sfx('chime');W.kick(1)}
+const def={site,concept,stations,tour,audio:true,panelLight:true,noglImg:'00',layout:'editorial',avoid:['#wp','#seBook'],chrome,
+  nav:[['Tentang','/tentang'],['Pengalaman','/layanan'],['Vila','/vila'],['Jurnal','/wawasan'],['Kontak','/kontak']],
   setup,
-  pickAction(id,W){if(id==='night'){const b=document.querySelector('[data-act=night]');W.night=!W.night;W.rt.actions.night(W.night);document.querySelectorAll('[data-act=night]').forEach(b=>{b.setAttribute('aria-pressed',W.night);b.querySelector('b').textContent=W.night?'Malam':'Siang'});W.sfx('chime');return true}},
-tick(t,dt,W){W.tickBeacon&&W.tickBeacon(t,dt)},
-  route(r,W){const a=r.seg[0],id=r.seg[1];if(W.beacon&&a!=='pesan')W.beacon(null);
+  pickAction(id,W){if(id==='night'){setNight(W,!W.night);return true}},
+  tick(t,dt,W){W.tickBeacon&&W.tickBeacon(t,dt)},
+  route(r,W){const a=r.seg[0],id=r.seg[1];if(W.beacon&&a!=='pesan')W.beacon(null);const wrap=(o,n,label)=>{if(!o)return o;o.html=o.html.replace(/<p class="wk">[\s\S]*?<\/p><h1 class="wh">([\s\S]*?)<\/h1>(<p class="wl">([\s\S]*?)<\/p>)?/,(m,t,_,sub)=>head(n,label,t,sub?sub.replace(/&amp;/g,'&'):''));return o};
     if(!a)return home(W);
-    if(a==='tentang')return Object.assign(C.about(site,'Garis pantai'),{st:'pantai'});
-    if(a==='layanan'&&!id)return Object.assign(C.services(site,'Kolam & spa'),{st:'kolam'});
-    if(a==='layanan'){const o=C.service(site,id);if(!o)return null;const st=SVC[id]||'kolam',v=VILLAS[st];return Object.assign(o,{st},v?{orbit:{target:v.t,az:v.az,el:.25,d:v.d,dmin:6,dmax:12}}:{})}
-    if((a==='vila'||a==='proyek')&&!id)return Object.assign(C.projects(site,r,'Garis pantai'),{st:'pantai'});
+    if(a==='tentang')return wrap(Object.assign(C.about(site),{st:'pantai'}),1,'Garis pantai');
+    if(a==='layanan'&&!id)return wrap(Object.assign(C.services(site),{st:'kolam'}),2,'Kolam & spa');
+    if(a==='layanan'){const o=C.service(site,id);if(!o)return null;const st=SVC[id]||'kolam',v=VILLAS[st];return wrap(Object.assign(o,{st},v?{orbit:{target:v.t,az:v.az,el:.25,d:v.d,dmin:7,dmax:17}}:{}),2,'Pengalaman')}
+    if((a==='vila'||a==='proyek')&&!id)return wrap(Object.assign(C.projects(site,r),{st:'pantai'}),3,'Vila');
     if(a==='vila'||a==='proyek'){const v=VILLAS[id];const o=C.project(site,id,'<p class="w360"><i></i>Seret untuk mengitari vila 360°, gulir atau cubit untuk mendekat.</p>');if(!o||!v)return null;
-      o.html=o.html.replace(/href="#\/proyek/g,'href="#/vila');return Object.assign(o,{st:id,orbit:{target:v.t,az:v.az,el:.25,d:v.d,dmin:6,dmax:12}})}
-    if(a==='wawasan'&&!id)return Object.assign(C.insights(site,'Kamar utama'),{st:'kamar',html:C.insights(site,'Kamar utama').html+'<div class="wrow">'+nightBtn(W)+'</div>'});
-    if(a==='wawasan'){const o=C.insight(site,id);return o&&Object.assign(o,{st:'kamar'})}
-    if(a==='pesan')return Object.assign(C.booking(site,W,booking(W),r),{st:'dek'});
+      o.html=o.html.replace(/href="#\/proyek/g,'href="#/vila');return wrap(Object.assign(o,{st:id,orbit:{target:v.t,az:v.az,el:.25,d:v.d,dmin:7,dmax:17}}),3,'Vila')}
+    if(a==='wawasan'&&!id){const o=wrap(Object.assign(C.insights(site),{st:'kamar'}),4,'Kamar utama');o.html+='<div class="wrow"><button class="wtg" data-act="night" aria-pressed="'+!!W.night+'"><i></i>Suasana: <b>'+(W.night?'Malam':'Siang')+'</b></button></div>';return o}
+    if(a==='wawasan'){const o=C.insight(site,id);return o&&wrap(Object.assign(o,{st:'kamar'}),4,'Jurnal')}
+    if(a==='pesan')return wrap(Object.assign(C.booking(site,W,booking(W),r),{st:'dek'}),5,'Dek & reservasi');
     if(a==='karier')return Object.assign(C.careers(site,'Dermaga'),{st:'dermaga'});
     if(a==='kontak'||a==='faq')return Object.assign(C.contact(site,W,'Pintu vila'),{st:'pintu'});return null},
-  act(t,e,W){if(t.dataset.act==='night'){W.night=!W.night;W.rt&&W.rt.actions.night(W.night);document.querySelectorAll('[data-act=night]').forEach(b=>{b.setAttribute('aria-pressed',W.night);b.querySelector('b').textContent=W.night?'Malam':'Siang'});W.sfx('chime');W.kick(1)}}};
+  onRoute(r,out,W){const i=chOf(r.path);document.querySelectorAll('#seIdx a').forEach(a=>a.classList.toggle('on',+a.dataset.i===i));const b=document.getElementById('seBook');if(b)b.hidden=r.seg[0]==='pesan'},
+  act(t,e,W){if(t.dataset.act==='night')setNight(W,!W.night)}};
 world(def);

@@ -3,19 +3,21 @@
 Bank inspirasi website 3D untuk **company profile** dan **e-commerce**. Setiap konsep adalah **situs sungguhan yang hidup di dalam adegan 3D-nya sendiri**:
 halaman menjadi tempat, kamera terbang dari satu tempat ke tempat lain, pengunjung bisa melihat sekeliling 360°, dan produk (atau vila, inti hologram, segmen DNA) bisa dikitari 360°.
 
-## Sembilan situs
+## Sembilan situs, sembilan pengalaman
 
-| Halaman | Jenis | Tempat di adegan |
+Setiap situs punya tata letak, alur, dan cara bernavigasi sendiri (bukan satu templat yang diganti warnanya):
+
+| Halaman | Jenis | Tata letak & alur |
 |---|---|---|
-| `concepts/kopi.html` | E-commerce · kopi | kawah (beranda), kebun (cerita), ruang sangrai, meja seduh, rak roastery (katalog), pajangan 360°, kasir |
-| `concepts/aqua.html` | E-commerce · akuarium | gerbang dermaga, etalase bawah laut (beri makan ikan, voucher), rak karang, pajangan batu 360°, kios kasir di dermaga |
-| `concepts/flora.html` | E-commerce · tanaman | bukit, jalan setapak, lapak tanaman, bedeng (siram, lampu tumbuh), pajangan 360°, meja kasir |
-| `concepts/kaze.html` | E-commerce · sneaker | gang hujan (palet neon), tiga pedestal (colorway), meja drop, pedestal 360°, kasir |
-| `concepts/celeste.html` | E-commerce · teleskop | puncak, kubah (buka celah, arahkan teleskop, tiket pengamatan), rak teleskop, pajangan 360°, kasir |
-| `concepts/volt.html` | E-commerce · otomotif | plaza, aula konfigurator (cat, velg, lampu), VOLT X1 dikitari 360° di piringan, dinding aksesori, meja konsultan |
-| `concepts/nexus.html` | Company profile · AI | plaza, lobi (tentang), kios layanan, lorong server (proyek), inti hologram 360°, media wall (wawasan), karier, resepsionis |
-| `concepts/serena.html` | Company profile + reservasi · resor | udara, pantai, kolam & spa (pengalaman), vila dikitari 360°, kamar (siang/malam), dek reservasi dengan penanda vila |
-| `concepts/genom.html` | Company profile + janji temu · klinik | sel, membran, inti (layanan), segmen DNA 360°, Golgi (studi), mitokondria (wawasan), jadwal konsultasi |
+| `concepts/kopi.html` | E-commerce · kopi | **Klasik**: menu atas, panel kanan, tur ‹ ›. Kawah → kebun → ruang sangrai (pilih sangrai, biji berubah warna) → meja seduh → rak → pajangan 360° → kasir |
+| `concepts/nexus.html` | Company profile · AI | **Konsol AI**: rel sistem di kiri, palet perintah (Ctrl K / tombol "Tanya NEXUS"), panel terminal dengan judul diketik, alur tanya-jawab ("Tanyakan selanjutnya"), inti hologram 360° per layanan/proyek |
+| `concepts/aqua.html` | E-commerce · akuarium | **Menyelam**: pengukur kedalaman di kanan sebagai navigasi, panel gelembung, etalase gelembung yang bisa digeser di bawah, gelembung naik saat berpindah; beri makan ikan 10× membuka voucher |
+| `concepts/serena.html` | Company profile + reservasi | **Editorial**: kolom majalah tanpa kotak dengan bab bernomor besar, indeks bab di kanan, bilah pemesanan selalu ada (tanggal, malam, tamu, vila), tombol matahari/bulan; vila dikitari 360° |
+| `concepts/flora.html` | E-commerce · tanaman | **Jurnal kebun**: buku catatan kertas bertab, kuis "cocokkan tanaman" 4 pertanyaan yang menaruh hasil terbaik di pajangan 360° |
+| `concepts/kaze.html` | E-commerce · sneaker | **Drop**: hitung mundur drop berikutnya, teks raksasa berjalan, dok produk di bawah dengan ‹ › antarbarang, ukuran wajib dipilih sebelum "Cop", keranjang dan checkout sebagai laci kanan |
+| `concepts/celeste.html` | E-commerce · teleskop | **Peta langit**: navigasi berupa rasi bintang, panel berbentuk kubah, koordinat langit langsung, pencari "malam ini ingin melihat apa?" yang mengarahkan teleskop dan menyarankan alat, tabel perbandingan |
+| `concepts/volt.html` | E-commerce · otomotif | **Konfigurator**: 5 langkah (warna, velg, baterai, aksesori, ringkasan) di dok bawah, kamera mengikuti langkah, harga berjalan, reservasi dengan booking fee |
+| `concepts/genom.html` | Company profile + janji temu | **Perjalanan pasien**: stepper 5 langkah di kiri, panel klinis putih, cek kecocokan ya/tidak yang langsung menyalakan segmen DNA dan menyarankan tes |
 
 `index.html` adalah beranda: portal 3D ke semua konsep. Alamat lama `sites/<id>.html` dialihkan ke halaman di atas.
 
@@ -62,7 +64,7 @@ js/world/world.js     mesin situs 3D: stasiun, terbang, lihat 360°, orbit produ
 js/world/kit.js       perabot bersama: rak, pajangan berputar, meja kasir, layar kanvas, gambar katalog dari model
 js/world/shop.js      panel e-commerce (katalog, produk, keranjang, checkout, pesanan, lacak, kontak)
 js/world/compro.js    panel company profile (tentang, layanan, proyek, wawasan, karier, reservasi)
-js/world/<id>.js      satu per situs: tempat, perabot, model produk, panel cerita
+js/world/<id>.js      satu per situs: tempat, perabot, model produk, tata letak (layout, chrome), alur khusus
 js/concepts/*.js      adegan 3D tiap konsep (dipakai ulang oleh situs)
 js/sites/*.js         data tiap situs (teks, produk, harga, kupon, ongkir)
 js/site/store.js      keranjang, pesanan, api simulasi (localStorage)
@@ -80,7 +82,8 @@ blender/              skrip Blender (bpy) untuk aset; lihat blender/README.md
 
 1. Buat adegan di `js/concepts/<id>.js` (fungsi build yang mengembalikan `scene`, `update`, `actions`).
 2. Tulis data di `js/sites/<id>.js` (merek, tema, produk atau layanan).
-3. Tulis `js/world/<id>.js`: daftar stasiun (posisi kamera, induk untuk jalur terbang), perabot dari `kit.js`, model produk, dan `route()` yang memetakan alamat ke tempat dan panel.
+3. Tulis `js/world/<id>.js`: daftar stasiun (posisi kamera, induk untuk jalur terbang), perabot dari `kit.js`, model produk, `route()` yang memetakan alamat ke tempat dan panel,
+   lalu `layout` (kelas CSS `.L-<nama>` di `css/world.css`), `chrome(W)` untuk elemen navigasi khusus, dan `onRoute()` untuk memperbaruinya.
 4. Salin salah satu `concepts/*.html` dan ganti id-nya; tambahkan entri di `js/registry.js`.
 
 ## Lisensi dan atribusi

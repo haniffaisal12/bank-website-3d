@@ -5,7 +5,7 @@ import {T,V,Box,RBox,Cyl,mesh} from '../core.js';
 import {world} from './world.js';
 import {screen,wrapText} from './kit.js';
 import * as C from './compro.js';
-import {esc} from '../site/ui.js';
+import {esc,$} from '../site/ui.js';
 import site from '../sites/nexus.js';
 import {concept} from '../concepts/nexus.js';
 
@@ -64,27 +64,61 @@ function setup(rt,W){const sc=rt.scene,S={};
     {objects:()=>[S.media.mesh],hint:'Klik: wawasan',on:()=>{location.hash='/wawasan'}},{objects:()=>[S.job.mesh],hint:'Klik: karier',on:()=>{location.hash='/karier'}},{objects:()=>[desk,S.logo.mesh],hint:'Klik: hubungi kami',on:()=>{location.hash='/kontak'}}];
 }
 const btn=(h,t,g)=>'<a class="wbtn'+(g?' ghost':'')+'" href="#'+h+'">'+t+'</a>';
-function home(W){const h=site.home;return{st:'menara',kind:'hero',title:'Beranda',html:'<p class="wk">'+esc(h.eyebrow)+'</p><h1 class="wh big">'+h.title+'</h1><p class="wl">'+esc(h.sub)+'</p>'
-  +'<div class="wrow">'+btn('/layanan','Lihat layanan')+btn('/tentang','Mulai tur',1)+'</div><div class="wrow"><button class="wtg" data-act="power" aria-pressed="'+!!W.power+'"><i></i>Daya menara: <b>'+(W.power?'Nyala':'Mati')+'</b></button></div>'
-  +C.stats(site)+'<h3>Dipercaya oleh</h3><p class="wtiny">'+h.clients.map(esc).join(' · ')+' (fiktif)</p>'+h.testi.slice(0,2).map(t=>'<blockquote>“'+esc(t[0])+'” <cite>'+esc(t[1])+', '+esc(t[2])+'</cite></blockquote>').join('')
-  +'<p class="wtiny">Gulir atau tekan › untuk masuk ke menara. Seret layar untuk melihat sekeliling 360°.</p>'}}
-const def={site,concept,stations,tour,audio:true,noglImg:'04',
+/* ---------- pengalaman "konsol AI": rel sistem, palet perintah, alur tanya-jawab ---------- */
+const RAIL=[['/','BERANDA'],['/tentang','TENTANG'],['/layanan','LAYANAN'],['/proyek','PROYEK'],['/wawasan','WAWASAN'],['/karier','KARIER'],['/kontak','KONTAK']];
+const Q=(t,h)=>[t,h];
+const ASK={'/':[Q('Apa yang NEXUS kerjakan?','/tentang'),Q('Layanan apa saja yang tersedia?','/layanan'),Q('Tunjukkan proyek di logistik','/proyek/tirta-gudang'),Q('Saya ingin konsultasi','/kontak')],
+  tentang:[Q('Bagaimana cara kerja agen AI kalian?','/layanan/agen-ai'),Q('Proyek mana yang paling berdampak?','/proyek/arunika-verifikasi'),Q('Nilai kerja tim kami','/tentang')],
+  layanan:[Q('Mulai dari data dulu?','/wawasan/data-dulu'),Q('Contoh hasil di produksi','/proyek'),Q('Jadwalkan sesi penemuan','/kontak')],
+  proyek:[Q('Layanan yang dipakai di proyek ini','/layanan'),Q('Baca pandangan tim','/wawasan'),Q('Diskusikan kasus serupa','/kontak')],
+  wawasan:[Q('Layanan tata kelola','/layanan/tata-kelola'),Q('Bergabung dengan tim','/karier'),Q('Tanya langsung','/kontak')],
+  karier:[Q('Apa yang kami kerjakan sehari-hari?','/proyek'),Q('Budaya dan nilai kerja','/tentang'),Q('Kirim lamaran','/kontak')],
+  kontak:[Q('Lihat layanan dulu','/layanan'),Q('Kembali ke awal','/')]};
+const ask=k=>{const l=ASK[k]||ASK['/'];return '<div class="nx-ask"><span>Tanyakan selanjutnya</span>'+l.map(q=>'<a href="#'+q[1]+'">› '+esc(q[0])+'</a>').join('')+'</div>'};
+function home(W){const h=site.home;return{st:'menara',kind:'hero',title:'Beranda',html:'<p class="wk">NEXUS·AI · '+esc(h.eyebrow)+'</p><h1 class="wh big">Halo. Saya NEXUS. Apa yang ingin Anda ketahui?</h1><p class="wl">'+esc(h.sub)+'</p>'
+  +'<div class="nx-q">'+ASK['/'].map(q=>'<a href="#'+q[1]+'"><b>›</b>'+esc(q[0])+'</a>').join('')+'</div>'
+  +'<div class="wrow"><button class="wtg" data-act="power" aria-pressed="'+!!W.power+'"><i></i>Daya menara: <b>'+(W.power?'Nyala':'Mati')+'</b></button><button class="wbtn sm ghost" data-act="cmd">Buka palet perintah <kbd>Ctrl K</kbd></button></div>'
+  +C.stats(site)+'<p class="wtiny">Klien: '+h.clients.map(esc).join(' · ')+' (fiktif). Seret layar untuk melihat sekeliling 360°.</p>'}}
+function chrome(W){
+  const rail=document.createElement('nav');rail.id='nxRail';rail.setAttribute('aria-label','Bagian situs');
+  rail.innerHTML=RAIL.map((x,i)=>'<a href="#'+x[0]+'" data-r="'+x[0]+'"><i></i><b>0'+i+'</b><span>'+x[1]+'</span></a>').join('')+'<em>SYS.OK · '+site.home.stats[2][0]+'% UPTIME</em>';document.body.appendChild(rail);
+  const cmd=document.createElement('button');cmd.id='nxCmd';cmd.innerHTML='<span>⌘</span>Tanya NEXUS atau lompat ke halaman…<kbd>Ctrl K</kbd>';document.body.appendChild(cmd);
+  const pal=document.createElement('div');pal.id='nxPal';pal.hidden=true;pal.setAttribute('role','dialog');pal.setAttribute('aria-label','Palet perintah');
+  pal.innerHTML='<div class="nxp"><input id="nxIn" placeholder="Ketik pertanyaan atau nama halaman…" aria-label="Cari" autocomplete="off"><ul id="nxList" role="listbox"></ul><p>↑↓ pilih · Enter buka · Esc tutup</p></div>';document.body.appendChild(pal);
+  const items=[...RAIL.map(x=>['Buka '+x[1].toLowerCase(),x[0],'halaman']),...Object.values(ASK).flat().map(q=>[q[0],q[1],'tanya']),
+    ...site.services.map(x=>[x.name,'/layanan/'+x.id,'layanan']),...site.projects.map(x=>[x.name+' · '+x.client,'/proyek/'+x.id,'proyek']),...site.insights.map(x=>[x.title,'/wawasan/'+x.id,'wawasan']),...site.jobs.map(x=>['Lowongan: '+x.title,'/karier','karier'])];
+  const seen=new Set(),ALL=items.filter(x=>{const k=x[0]+x[1];if(seen.has(k))return false;seen.add(k);return true});let sel=0,list=[];
+  const draw=()=>{const q=$('#nxIn').value.toLowerCase().trim();list=ALL.filter(x=>!q||x[0].toLowerCase().includes(q)||x[2].includes(q)).slice(0,9);sel=Math.min(sel,list.length-1);
+    $('#nxList').innerHTML=list.map((x,i)=>'<li role="option" aria-selected="'+(i===sel)+'" data-i="'+i+'"><span>'+esc(x[0])+'</span><em>'+x[2]+'</em></li>').join('')||'<li class="none">Tidak ada yang cocok. Coba “agen”, “proyek”, atau “kontak”.</li>'};
+  const open=()=>{pal.hidden=false;$('#nxIn').value='';sel=0;draw();setTimeout(()=>$('#nxIn').focus(),20);W.sfx('cycle')},close=()=>{pal.hidden=true;cmd.focus()};
+  const go=i=>{const x=list[i];if(!x)return;close();location.hash=x[1].replace(/#.*$/,'')};W.openCmd=open;
+  cmd.onclick=open;pal.addEventListener('click',e=>{if(e.target===pal)close();const li=e.target.closest('li[data-i]');if(li)go(+li.dataset.i)});
+  $('#nxIn').addEventListener('input',()=>{sel=0;draw()});
+  $('#nxIn').addEventListener('keydown',e=>{if(e.key==='ArrowDown'){sel=Math.min(list.length-1,sel+1);draw();e.preventDefault()}else if(e.key==='ArrowUp'){sel=Math.max(0,sel-1);draw();e.preventDefault()}else if(e.key==='Enter'){go(sel)}else if(e.key==='Escape')close()});
+  addEventListener('keydown',e=>{if((e.key==='k'||e.key==='K')&&(e.ctrlKey||e.metaKey)){e.preventDefault();pal.hidden?open():close()}else if(e.key==='/'&&pal.hidden&&!/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)){e.preventDefault();open()}});
+}
+/* judul diketik seperti terminal */
+function typeTitle(){const h=document.querySelector('#wpBody h1.wh');if(!h||matchMedia('(prefers-reduced-motion: reduce)').matches)return;const full=h.textContent;h.textContent='';h.classList.add('nx-typing');let i=0;clearInterval(window.__nxT);
+  window.__nxT=setInterval(()=>{i+=2;h.textContent=full.slice(0,i);if(i>=full.length){clearInterval(window.__nxT);h.classList.remove('nx-typing')}},18)}
+const def={site,concept,stations,tour,audio:true,noglImg:'04',layout:'console',avoid:['#wp'],
   nav:[['Beranda','/'],['Tentang','/tentang'],['Layanan','/layanan'],['Proyek','/proyek'],['Wawasan','/wawasan'],['Karier','/karier'],['Kontak','/kontak']],
-  setup,
+  setup,chrome,
   pickAction(id,W){if(id==='holo'){W.holo=((W.holo||0)+1)%3;W.rt.actions.holo(W.holo);W.rt.actions.scan();W.sfx('cycle');return true}},
-
-  route(r,W){const a=r.seg[0],id=r.seg[1],rt=W.rt;const holo=k=>{if(!rt)return;rt.actions.holo(k);rt.actions.scan();W.kick(1)};
+  route(r,W){const a=r.seg[0],id=r.seg[1],rt=W.rt;const holo=k=>{if(!rt)return;rt.actions.holo(k);rt.actions.scan();W.kick(1)};const plus=(o,k)=>o&&Object.assign(o,{html:o.html+ask(k)});
     if(W.drawProj&&a!=='proyek')W.drawProj(null);if(W.drawMedia&&a!=='wawasan')W.drawMedia(null);
     if(!a)return home(W);
-    if(a==='tentang')return Object.assign(C.about(site,'Lobi kaca'),{st:'lobi'});
-    if(a==='layanan'&&!id)return Object.assign(C.services(site,'Zona layanan'),{st:'depan'});
-    if(a==='layanan'){const o=C.service(site,id,'<p class="w360"><i></i>Seret untuk mengitari inti hologram 360°. Gulir atau cubit untuk mendekat.</p>');if(!o)return null;holo(HOLO[id]||0);return Object.assign(o,{st:'inti',orbit:{target:[0,3.3,-8],az:0,el:.08,d:3.1,dmin:2.3,dmax:3.4}})}
-    if(a==='proyek'&&!id)return Object.assign(C.projects(site,r,'Lorong server'),{st:'lorong'});
-    if(a==='proyek'){const x=site.projects.find(p=>p.id===id);const o=C.project(site,id,'<p class="w360"><i></i>Seret untuk mengitari inti hologram 360°. Layar kiri-kanan menampilkan hasilnya.</p>');if(!o)return null;holo(HOLO[id]||0);if(rt)rt.actions.oc(true);W.drawProj&&W.drawProj(x);return Object.assign(o,{st:'inti',orbit:{target:[0,3.3,-8],az:.35,el:.1,d:3.2,dmin:2.3,dmax:3.4},leave:()=>rt&&rt.actions.oc(false)})}
-    if(a==='wawasan'&&!id)return Object.assign(C.insights(site,'Media wall'),{st:'media'});
-    if(a==='wawasan'){const o=C.insight(site,id);if(!o)return null;W.drawMedia&&W.drawMedia(site.insights.find(x=>x.id===id));return Object.assign(o,{st:'media'})}
-    if(a==='karier')return Object.assign(C.careers(site,'Dinding karier'),{st:'karier'});
-    if(a==='kontak'||a==='faq')return Object.assign(C.contact(site,W,'Resepsionis'),{st:'resepsi'});return null},
+    if(a==='tentang')return plus(Object.assign(C.about(site,'Lobi kaca'),{st:'lobi'}),'tentang');
+    if(a==='layanan'&&!id)return plus(Object.assign(C.services(site,'Zona layanan'),{st:'depan'}),'layanan');
+    if(a==='layanan'){const o=C.service(site,id,'<p class="w360"><i></i>Seret untuk mengitari inti hologram 360°. Gulir atau cubit untuk mendekat.</p>');if(!o)return null;holo(HOLO[id]||0);return plus(Object.assign(o,{st:'inti',orbit:{target:[0,3.3,-8],az:0,el:.08,d:3.1,dmin:2.3,dmax:3.4}}),'layanan')}
+    if(a==='proyek'&&!id)return plus(Object.assign(C.projects(site,r,'Lorong server'),{st:'lorong'}),'proyek');
+    if(a==='proyek'){const x=site.projects.find(p=>p.id===id);const o=C.project(site,id,'<p class="w360"><i></i>Seret untuk mengitari inti hologram 360°. Layar kiri-kanan menampilkan hasilnya.</p>');if(!o)return null;holo(HOLO[id]||0);if(rt)rt.actions.oc(true);W.drawProj&&W.drawProj(x);return plus(Object.assign(o,{st:'inti',orbit:{target:[0,3.3,-8],az:.35,el:.1,d:3.2,dmin:2.3,dmax:3.4},leave:()=>rt&&rt.actions.oc(false)}),'proyek')}
+    if(a==='wawasan'&&!id)return plus(Object.assign(C.insights(site,'Media wall'),{st:'media'}),'wawasan');
+    if(a==='wawasan'){const o=C.insight(site,id);if(!o)return null;W.drawMedia&&W.drawMedia(site.insights.find(x=>x.id===id));return plus(Object.assign(o,{st:'media'}),'wawasan')}
+    if(a==='karier')return plus(Object.assign(C.careers(site,'Dinding karier'),{st:'karier'}),'karier');
+    if(a==='kontak'||a==='faq')return plus(Object.assign(C.contact(site,W,'Resepsionis'),{st:'resepsi'}),'kontak');return null},
+  onRoute(r,out,W){$('#wpTitle').textContent='nexus@core:~$ '+(r.path==='/'?'halo':r.path.slice(1).replace(/\//g,' › '));
+    document.querySelectorAll('#nxRail a').forEach(a=>a.classList.toggle('on',a.dataset.r===r.path||(a.dataset.r!=='/'&&r.path.startsWith(a.dataset.r))));typeTitle()},
   onArrive(id,W){if(id!=='menara'&&!W.power&&W.rt){W.power=true;W.rt.actions.power(true)}},
-  act(t,e,W){if(t.dataset.act==='power'){W.power=!W.power;W.rt&&W.rt.actions.power(W.power);t.setAttribute('aria-pressed',W.power);t.querySelector('b').textContent=W.power?'Nyala':'Mati';W.sfx(W.power?'power':'off');W.kick(1.5)}}};
+  act(t,e,W){const a=t.dataset.act;if(a==='cmd'){W.openCmd&&W.openCmd();return}
+    if(a==='power'){W.power=!W.power;W.rt&&W.rt.actions.power(W.power);t.setAttribute('aria-pressed',W.power);t.querySelector('b').textContent=W.power?'Nyala':'Mati';W.sfx(W.power?'power':'off');W.kick(1.5)}}};
 world(def);

@@ -53,8 +53,8 @@ function buildKopi(ui){
   const path=new T.Mesh(new T.PlaneGeometry(5,62,1,30),pbr({fx:24,fy:24,oct:4,seed:44,c0:0x6a5640,c1:0xa88a68,nS:6,r0:.9,r1:1,rep:[2,12],w:256}));path.geometry.rotateX(-Math.PI/2);const pp=path.geometry.attributes.position;for(let i=0;i<pp.count;i++)pp.setY(i,hFn(pp.getX(i),pp.getZ(i)-31)+.04);path.position.z=-31+0;path.receiveShadow=true;scene.add(path);
   // ---- roastery
   const BX=0,BZ=-70,W=14,Dp=16;
-  const plasterM=pbr({hf:brickHF(10,5),fx:6,fy:6,oct:4,seed:45,c0:0x3a3633,c1:0x77706a,nS:5,r0:.8,r1:1,rep:[3,1.2],w:256});
-  const timber=pbr({fx:2,fy:26,oct:4,seed:46,c0:0x2a1a10,c1:0x5a3a22,nS:4,r0:.5,r1:.85,rep:[1,3],w:256}),floorM=pbr({hf:plankHF(8,1),fx:2,fy:30,oct:4,seed:47,c0:0x3a2414,c1:0x7a5230,nS:2,r0:.4,r1:.8,rep:[3,3],w:256});
+  const plasterM=pbr({hf:brickHF(8,16),fx:6,fy:6,oct:4,seed:45,c0:0x4a2e22,c1:0x8a5a42,nS:4,r0:.82,r1:1,rep:[7,3.4],w:256});
+  const timber=pbr({fx:2,fy:26,oct:4,seed:46,c0:0x2a1a10,c1:0x5a3a22,nS:4,r0:.5,r1:.85,rep:[1,3],w:256}),floorM=pbr({hf:plankHF(10,3),fx:3,fy:14,oct:4,seed:47,c0:0x3a2414,c1:0x7a5230,nS:2,r0:.45,r1:.8,rep:[8,4],w:256});
   const tin=pbr({hf:ridgeHF(24),fx:1,fy:24,oct:2,seed:48,c0:0x5a5e66,c1:0x9aa0a8,nS:3,r0:.45,r1:.65,rep:[10,1],metal:.8,w:256,mat:{side:T.DoubleSide}});
   const by=hFn(BX,BZ);const B=new T.Group();B.position.set(BX,by,BZ);scene.add(B);
   Box(W+.6,.4,Dp+.6,stoneM,0,.2,0,B);Box(W,.15,Dp,floorM,0,.43,0,B);
