@@ -24,6 +24,19 @@ python blender/volt_car.py glb             # ekspor GLB
 cp blender/out/volt_car.glb assets/models/volt_car.glb
 ```
 
+## Ikan badut AQUARIA
+
+`aqua_clownfish.py` membangun ikan badut (Amphiprion ocellaris): badan loft dari profil punggung, perut, dan lebar
+(moncong tumpul, pangkal ekor ramping), sirip punggung berduri dan lunak, sirip dubur, perut, dada, dan ekor dengan
+jari-jari sirip, serta mata dengan iris. Tekstur belang (tiga pita putih bertepi hitam, pita tengah menonjol ke depan)
+dan tepi hitam sirip dibuat di skrip dengan numpy, tanpa berkas luar. Dimuat oleh `js/concepts/aqua.js` (`clownFish`)
+untuk ikan badut di adegan bawah laut dan model produk; ekor (`Ekor`) dan sirip dada (`SiripDada_L/R`) dianimasikan di Three.js.
+
+```bash
+blender -b -P blender/aqua_clownfish.py     # keluaran: blender/out/clownfish.glb (sekitar 320 KB)
+cp blender/out/clownfish.glb assets/models/clownfish.glb
+```
+
 ## Status
 
 Mobil sudah terbaca sebagai mobil dan detailnya lebih kaya daripada versi loft sebelumnya, tetapi proporsinya masih

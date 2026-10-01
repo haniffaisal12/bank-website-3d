@@ -1,5 +1,5 @@
 /* Konsep aqua — modul mandiri, dimuat oleh concepts/aqua.html */
-import {$,AC,BGU,Box,CY,Cart,Cyl,EXRLoader,EffectComposer,GTAOPass,OutputPass,RBox,Reflector,RenderPass,RoundedBoxGeometry,ST,ShaderPass,Sky,Sph,T,TG,UnrealBloomPass,V,Water,brickHF,camera,canvas,clamp,ctex,dtex,emis,envCache,fbm,floorMat,glow,glowTex,hdri,hex2,leafGeo,leafMat,leafTexture,lerp,loadHdri,makeSky,mesh,noShadow,pbr,perfHF,physM,plankHF,pmrem,reduce,renderer,ridgeHF,rnd,rng,sstep,starField,stdM,sunDir,sunLight,tagSprite,textTex,tileHF,waterNormal,weaveHF,wetFloor,windowTex} from '../core.js';
+import {loadModel,$,AC,BGU,Box,CY,Cart,Cyl,EXRLoader,EffectComposer,GTAOPass,OutputPass,RBox,Reflector,RenderPass,RoundedBoxGeometry,ST,ShaderPass,Sky,Sph,T,TG,UnrealBloomPass,V,Water,brickHF,camera,canvas,clamp,ctex,dtex,emis,envCache,fbm,floorMat,glow,glowTex,hdri,hex2,leafGeo,leafMat,leafTexture,lerp,loadHdri,makeSky,mesh,noShadow,pbr,perfHF,physM,plankHF,pmrem,reduce,renderer,ridgeHF,rnd,rng,sstep,starField,stdM,sunDir,sunLight,tagSprite,textTex,tileHF,waterNormal,weaveHF,wetFloor,windowTex} from '../core.js';
 /* ==========================================================
    KONSEP 2 — AQUARIA : gerbang -> bawah air + beri makan ikan
    ========================================================== */
@@ -39,6 +39,19 @@ function fishBodyGeo(){
     const t=(y+1)/2;const prof=Math.pow(Math.sin(Math.PI*Math.pow(t,.72)),.6)*(.35+.65*(1-t*.55));const ped=1-.62*Math.pow(t,3.2);
     p.setXYZ(i,x*prof*.55*ped,y*1.5,z*prof*.24*ped+0)}
   g.rotateZ(Math.PI/2);g.computeVertexNormals();return g}
+/* ikan badut dari Blender (blender/aqua_clownfish.py); bahan diganti agar serupa ikan lain dan dipakai bersama */
+const CLOWN_MAT={};
+function clownFish(){return loadModel('clownfish').then(({scene:m})=>{
+  m.traverse(o=>{if(!o.isMesh)return;const s=o.material,n=s.name;
+    CLOWN_MAT[n]=CLOWN_MAT[n]||(n==='Badan'?new T.MeshPhysicalMaterial({map:s.map,roughness:.32,clearcoat:.9,clearcoatRoughness:.15,iridescence:.25,iridescenceIOR:1.4})
+      :n==='Sirip'?new T.MeshStandardMaterial({map:s.map,roughness:.55,side:T.DoubleSide,transparent:true,opacity:.92,depthWrite:false})
+      :n==='Mata'?new T.MeshPhysicalMaterial({color:0x040404,roughness:.05,clearcoat:1}):s);
+    o.material=CLOWN_MAT[n];o.castShadow=n!=='Sirip'});
+  const pec=['SiripDada_L','SiripDada_R'].map(n=>m.getObjectByName(n)).filter(Boolean);pec.forEach(p=>p.userData.q0=p.quaternion.clone());
+  m.userData.tail=m.getObjectByName('Ekor');m.userData.pec=pec;return m})}
+const _up=new T.Vector3(0,1,0),_q=new T.Quaternion();
+function swimClown(m,w,t,ph){const u=m.userData;if(u.tail)u.tail.rotation.y=w*.45;
+  u.pec.forEach((p,i)=>p.quaternion.copy(p.userData.q0).multiply(_q.setFromAxisAngle(_up,(i?-1:1)*(.2+Math.sin(t*3+ph)*.3))))}
 function finGeo(w,h,taper){const s=new T.Shape();s.moveTo(0,0);s.bezierCurveTo(w*.3,h*.1,w*.8,h*.5,w,h*taper);s.lineTo(w,-h*taper);s.bezierCurveTo(w*.8,-h*.5,w*.3,-h*.1,0,0);const g=new T.ShapeGeometry(s,10);return g}
 function reefRock(r,seedv){const g=new T.IcosahedronGeometry(r,4),p=g.attributes.position,n=fbm(64,64,{fx:4,fy:4,oct:4,seed:seedv});
   for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i),z=p.getZ(i),l=Math.hypot(x,y,z),u=(Math.atan2(z,x)/6.283+.5),v=y/l*.5+.5,h=n[(Math.floor(v*63)*64)+Math.floor(u*63)];const k=1+(h-.5)*.7;p.setXYZ(i,x*k,y*k*.8,z*k)}g.computeVertexNormals();return g}
@@ -134,9 +147,12 @@ function buildAqua(ui){
     [-1,1].forEach(s=>{const e=new T.Mesh(new T.SphereGeometry(.09,10,8),new T.MeshStandardMaterial({color:0x080808,roughness:.1,metalness:.3}));e.position.set(1.05,.13,s*.17);g.add(e)});
     const sc=big?rnd(2.2,2.8):rnd(.42,.75);g.scale.setScalar(sc);scene.add(g);
     const o={g,s:sc,si,k:k%4,tail,body,tm,tm2,dor,pec,v:V(rnd(-1,1),0,rnd(-1,1)),off:V(rnd(-5,5),rnd(-2.5,2.5),rnd(-4,4)),sp:big?1.8:rnd(2.4,3.6),ph:rnd(0,6),pulse:0};if(big)o.off.multiplyScalar(2.5);
-    g.position.set(rnd(-20,20),rnd(-17,-6),rnd(-40,-14));return o}
+    g.position.set(rnd(-20,20),rnd(-17,-6),rnd(-40,-14));
+    if(o.k===0)clownFish().then(m=>{o.gen=g.children.slice();o.clown=m;g.add(m);showClown(o)});
+    return o}
+  function showClown(o){const on=spec===0;o.clown.visible=on;o.gen.forEach(c=>c.visible=!on)}
   for(let i=0;i<40;i++)fish.push(mkFish(i%3,false,i));for(let i=0;i<2;i++)fish.push(mkFish(3,true,i));
-  let spec=0;function recolor(){fish.forEach(o=>{const mm=fishMats[spec][o.k];o.body.material=mm.body;[o.tm,o.tm2,o.dor,...o.pec].forEach(m=>m.material=mm.fin)})}
+  let spec=0;function recolor(){fish.forEach(o=>{const mm=fishMats[spec][o.k];o.body.material=mm.body;[o.tm,o.tm2,o.dor,...o.pec].forEach(m=>m.material=mm.fin);if(o.clown)showClown(o)})}
   const pellets=[];for(let i=0;i<40;i++){const m=Sph(.14,new T.MeshStandardMaterial({color:0xff9a3a,emissive:0xff6a10,emissiveIntensity:.8,roughness:.6}),0,0,0,scene,10,8);m.visible=false;pellets.push({m,a:false,sp:1,ph:0})}
   let fed=0,cartN=0;const tmp=V(0,0,0),desired=V(0,0,0),cart=Cart(ui);
   const B={x:[-28,28],y:[-19.5,-4],z:[-43,-10]};
@@ -160,6 +176,7 @@ function buildAqua(ui){
         p.addScaledVector(f.v,dt);p.x=clamp(p.x,B.x[0],B.x[1]);p.y=clamp(p.y,B.y[0],B.y[1]);p.z=clamp(p.z,B.z[0],B.z[1]);
         const vl=f.v.length()||1;g.rotation.order='YZX';g.rotation.y=Math.atan2(-f.v.z,f.v.x);g.rotation.z=Math.asin(clamp(f.v.y/vl,-1,1));
         const w=Math.sin(t*(4+vl*2.2)+f.ph);f.tail.rotation.y=w*.5;f.body.rotation.y=w*.06;f.pec.forEach((q,i)=>q.rotation.x=(i?1:-1)*(.5+Math.sin(t*3+f.ph)*.25));
+        if(f.clown&&f.clown.visible){f.clown.rotation.y=w*.06;swimClown(f.clown,w,t,f.ph)}
         f.pulse=Math.max(0,f.pulse-dt*2);g.scale.setScalar(f.s*(1+f.pulse*.35))});
       tagS.forEach(s=>{s.userData.b=Math.max(0,s.userData.b-dt*2);const bs=1.1*(1+s.userData.b*.4);s.scale.set(bs*640/120,bs,1)});
     },
@@ -180,4 +197,4 @@ export const concept={id:'aqua',hdris:[],name:'AQUARIA',type:'E-commerce',acc:'#
  ]};
 
 /* dipakai ulang oleh situs 3D (js/world/aqua.js) untuk model produk */
-export {fishBodyGeo,finGeo,fishTex,branchCoral,reefRock,FISH_PAT,withCaustics};
+export {fishBodyGeo,finGeo,fishTex,branchCoral,reefRock,FISH_PAT,withCaustics,clownFish};

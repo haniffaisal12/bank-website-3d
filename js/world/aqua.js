@@ -6,14 +6,16 @@ import {lath,label,shelf,pedestal,counter,wireShop} from './kit.js';
 import * as shop from './shop.js';
 import {esc,toast,$} from '../site/ui.js';
 import site from '../sites/aqua.js';
-import {concept,fishBodyGeo,finGeo,fishTex,branchCoral,reefRock} from '../concepts/aqua.js';
+import {concept,fishBodyGeo,finGeo,fishTex,branchCoral,reefRock,clownFish} from '../concepts/aqua.js';
 
 const SB=-22,gy=(x,z)=>SB+Math.sin(x*.09)*1.6+Math.cos(z*.11)*1.4+Math.sin((x+z)*.3)*.4;
 /* ---------- model produk ---------- */
 const glassM=()=>new T.MeshPhysicalMaterial({color:0xeaffff,roughness:.03,transparent:true,opacity:.18,clearcoat:1,side:T.DoubleSide,depthWrite:false});
 const waterM=()=>new T.MeshPhysicalMaterial({color:0x3fb8d0,roughness:.1,transparent:true,opacity:.28,depthWrite:false});
 let BODY=null,TAIL=null,DOR=null;const fishMat={};
-function fish(pat,o){o=o||{};BODY=BODY||fishBodyGeo();TAIL=TAIL||finGeo(1,.9,.7);DOR=DOR||finGeo(1.1,.6,.4);
+/* ikan badut memakai model Blender bila sudah termuat (dimuat sejak awal karena model produk dibuat sinkron) */
+let CLOWN=null;clownFish().then(m=>{CLOWN=m}).catch(()=>{});
+function fish(pat,o){o=o||{};if(pat==='clown'&&CLOWN&&!o.disc&&!o.fins)return CLOWN.clone(true);BODY=BODY||fishBodyGeo();TAIL=TAIL||finGeo(1,.9,.7);DOR=DOR||finGeo(1.1,.6,.4);
   const m=fishMat[pat]||(fishMat[pat]={body:new T.MeshPhysicalMaterial({map:fishTex(pat),roughness:.3,clearcoat:.9,iridescence:.35}),fin:new T.MeshStandardMaterial({map:fishTex(pat),roughness:.6,side:T.DoubleSide,transparent:true,opacity:.88})});
   const g=new T.Group(),b=new T.Mesh(BODY,m.body);if(o.disc)b.scale.set(.75,1.9,1);g.add(b);const fs=o.fins||1;
   const t=new T.Mesh(TAIL,m.fin);t.position.x=-1.4;t.rotation.y=Math.PI;t.scale.setScalar(fs);g.add(t);
