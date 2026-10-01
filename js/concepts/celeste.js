@@ -142,7 +142,7 @@ function buildCeleste(ui){
   const shots=[];for(let i=0;i<3;i++){const m=new T.Mesh(new T.PlaneGeometry(14,.14),new T.MeshBasicMaterial({color:new T.Color(2,2.4,3),transparent:true,opacity:0,blending:T.AdditiveBlending,depthWrite:false,fog:false,toneMapped:false}));scene.add(m);shots.push({m,t:-rnd(1,6),d:V(0,0,0),o:V(0,300,0)})}
   const snowP=(()=>{const n=600,g=new T.BufferGeometry(),p=new Float32Array(n*3);for(let i=0;i<n;i++){p[i*3]=rnd(-40,40);p[i*3+1]=rnd(0,25);p[i*3+2]=rnd(-20,50)}g.setAttribute('position',new T.BufferAttribute(p,3));const o=new T.Points(g,new T.PointsMaterial({color:0xdfe9ff,size:.05,transparent:true,opacity:.6,depthWrite:false}));scene.add(o);return o})();
   let openK=1,openT=1,aim=0,cartN=0;const cart=Cart(ui);
-  return{scene,look:{exp:1.05,bloom:[.45,.8,1.2],vig:.4,grain:.02,tint:[.98,1,1.05],sat:1.05},
+  return{scene,pick:[{objects:()=>P.map(p=>p.o).filter(o=>o.visible).concat([rig]),id:'aim',hint:'Klik: arahkan ke target lain'}],look:{exp:1.05,bloom:[.45,.8,1.2],vig:.4,grain:.02,tint:[.98,1,1.05],sat:1.05},
     update(t,dt,cam){
       aur.uniforms.t.value=t;
       openK+=(openT-openK)*(1-Math.exp(-dt*1.1));const s=sstep(0,1,openK)*3.7;dA.position.z=s;dB.position.z=-s;

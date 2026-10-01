@@ -123,7 +123,7 @@ function buildFlora(ui){
   const dir=sd.clone().negate();for(let i=0;i<8;i++){const g=new T.PlaneGeometry(1.6,16);g.translate(0,8,0);const m=new T.Mesh(g,shaftM);m.position.set(-8+i*2.3,0,rnd(-10,10));m.lookAt(m.position.clone().add(V(0,0,1)));m.quaternion.setFromUnitVectors(V(0,1,0),sd.clone().normalize());m.position.y=0;scene.add(m)}
   const dust=(()=>{const n=220,g=new T.BufferGeometry(),p=new Float32Array(n*3);for(let i=0;i<n;i++){p[i*3]=rnd(-7,7);p[i*3+1]=rnd(.5,7);p[i*3+2]=rnd(-14,14)}g.setAttribute('position',new T.BufferAttribute(p,3));const o=new T.Points(g,new T.PointsMaterial({map:glowTex,color:0xfff2c0,size:.14,transparent:true,opacity:.7,depthWrite:false,blending:T.AdditiveBlending}));scene.add(o);return o})();
   let waterT=0,uv=0,uvT=0,lastS=0,cartN=0,wet=0;const cart=Cart(ui);const avg=()=>plants.reduce((a,p)=>a+p.g_,0)/plants.length;const dumm=new T.Object3D();
-  return{scene,look:{exp:.95,bloom:[.28,.7,1.2],vig:.3,grain:.02,tint:[1,1,.98],sat:1.15},
+  return{scene,pick:[{objects:()=>plants.map(p=>p.g),id:'water',hint:'Klik: siram tanaman'}],look:{exp:.95,bloom:[.28,.7,1.2],vig:.3,grain:.02,tint:[1,1,.98],sat:1.15},
     update(t,dt,cam){
       gU.uT.value=t;shaftM.uniforms.t.value=t;
       plants.forEach(p=>{p.g_+=(p.tgt-p.g_)*(1-Math.exp(-dt*.9));p.g.scale.setScalar(p.g_);p.g.rotation.z=Math.sin(t*.8+p.ph)*.02;p.fl.scale.setScalar(clamp((p.g_-1.1)*5,0,1))});

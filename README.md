@@ -18,6 +18,17 @@ Bank inspirasi website 3D sinematik untuk **company profile** dan **e-commerce**
 
 `index.html` adalah beranda: portal 3D ke semua konsep dan daftar ide yang belum dibangun.
 
+## Studi kasus dan interaksi
+
+- **Studi kasus:** slide terakhir tiap konsep (atau tombol *Studi kasus* di kanan atas) berisi klien fiktif, tantangan, pendekatan, keputusan desain
+  (dengan tombol *Lihat di adegan*), target hipotesis, dan stack. Datanya ada di `js/study.js`. Semua klien dan angka fiktif,
+  dan angka hanyalah target, bukan hasil terukur.
+- **Titik panas:** lingkaran berdenyut di dalam adegan. Klik untuk membuka penjelasan keputusan desain di tempat itu.
+- **Klik objek 3D:** ikan, sepatu, mobil, tanaman, hologram, planet, dan lainnya dapat diklik. Kursor berubah dan muncul petunjuk.
+- **Suara:** semua dihasilkan dengan Web Audio (tanpa berkas suara). Ambien berganti per slide, klik dan aksi punya efek sendiri.
+  Browser baru mengizinkan suara setelah klik pertama. Tombol *Suara* di kanan atas mematikannya dan pilihan diingat.
+- **Gerak:** kursor khusus dan riak klik, bilah progres, teks muncul bertahap, dorongan FOV dan getar kamera pada aksi, getar ponsel saat menekan tombol.
+
 ## Menjalankan lokal
 
 Situs ini statis. Cukup sajikan foldernya lewat server HTTP apa pun:
@@ -40,6 +51,8 @@ concepts/*.html       satu halaman per konsep
 css/site.css          gaya bersama, responsif dari 320px sampai desktop
 js/core.js            helper 3D, tekstur prosedural, HDRI, bahan
 js/engine.js          slide snap-scroll, HUD, kamera dari posisi scroll, post-processing
+js/audio.js           suara prosedural (Web Audio)
+js/study.js           studi kasus, titik panas, dan pemetaan audio per konsep
 js/registry.js        daftar konsep (menu, kartu, tautan antar-halaman)
 js/concepts/*.js      satu modul per konsep: adegan, slide, dan aksi tombol
 js/cover.js           adegan portal untuk beranda

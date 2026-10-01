@@ -69,7 +69,7 @@ function buildGenom(ui){
   const fn=500,fg=new T.BufferGeometry(),fp=new Float32Array(fn*3);for(let i=0;i<fn;i++){fp[i*3]=(rr()-.5)*24;fp[i*3+1]=(rr()-.5)*14;fp[i*3+2]=12-rr()*90}
   fg.setAttribute('position',new T.BufferAttribute(fp,3));const dust=new T.Points(fg,new T.PointsMaterial({map:glowTex,color:0x9ff3ff,size:.34,transparent:true,opacity:.75,blending:T.AdditiveBlending,depthWrite:false}));scene.add(dust);
   let booked=0;
-  return{scene,look:{exp:1,bloom:[.5,.7,1.0],vig:.45,grain:.03,tint:[.96,1,1.04],sat:1.12},
+  return{scene,pick:[{objects:()=>[helix],id:'unzip',hint:'Klik: urai atau gulung heliks'}],look:{exp:1,bloom:[.5,.7,1.0],vig:.45,grain:.03,tint:[.96,1,1.04],sat:1.12},
     update(t,dt,cam){
       helix.rotation.z+=dt*.12;memb.rotation.y+=dt*.01;nuc.rotation.y-=dt*.02;nucW.rotation.y-=dt*.02;
       const tgt=unzipT?N+60:-60;if(Math.abs(unzipF-tgt)>.5){unzipF+=Math.sign(tgt-unzipF)*Math.min(Math.abs(tgt-unzipF),dt*110);place()}

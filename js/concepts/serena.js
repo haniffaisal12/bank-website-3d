@@ -80,10 +80,11 @@ function buildSerena(ui){
     const K=1.5,brass=new T.MeshPhysicalMaterial({color:0xd4a24a,metalness:1,roughness:.26,clearcoat:.15,envMapIntensity:1.3}),
       glass=new T.MeshPhysicalMaterial({color:0xf2f7ff,metalness:0,roughness:.03,transparent:true,opacity:.3,ior:1.5,envMapIntensity:3,depthWrite:false,side:T.DoubleSide});
     cm.traverse(o=>{if(!o.isMesh)return;const isGlass=/glass/i.test(o.material.name);o.material=isGlass?glass:brass;o.castShadow=!isGlass;o.receiveShadow=true});
-    const g=new T.Group();g.add(cm);g.scale.setScalar(K);g.position.set(-1.7,4.3,.3);V0.add(g);const rope=Cyl(.012,.012,2.4,woodD,-1.7,5.5,.3,V0,6);rope.castShadow=false;
+    const g=new T.Group();g.add(cm);g.scale.setScalar(K);g.position.set(-1.7,4.3,.3);V0.add(g);pickList.push(g);const rope=Cyl(.012,.012,2.4,woodD,-1.7,5.5,.3,V0,6);rope.castShadow=false;
     (meta.tips||[]).forEach(p=>{const gl=glow(0xffb45c,.34,p[0],p[1],p[2],g,0);R(gl.material,'opacity',0,.95)});
     const cl=new T.PointLight(0xffb870,0,10,2);cl.position.set(0,-.5,0);g.add(cl);R(cl,'intensity',0,26);scene.userData.aoDirty=true;
   }).catch(()=>{});
+  const pickList=[];
   // dek
   [-1,1].forEach(s=>Box(.1,.9,5.6,woodD,s*6.2,.7,-6.9,V0));Box(12.6,.1,.1,woodD,0,1.15,-9.8,V0);
   [-2.4,2.4].forEach(x=>{RBox(1.4,.3,3,.08,linen,x,.6,-7.2,V0);Box(1.5,.08,3.2,woodD,x,.4,-7.2,V0)});
@@ -126,7 +127,7 @@ function buildSerena(ui){
   scene.traverse(o=>{if(o.isMesh&&o.material&&o.material.transparent&&o.material!==lagoonM)o.castShadow=false});
   let night=0,tgtN=0,booked=0,lastEnv=-1;const tc=new T.Color(),sd=new T.Vector3(),md=sunDir(38,-70);
   const flick=flames.map(()=>rnd(0,6));
-  return{scene,look:{exp:.9,bloom:[.22,.6,1.3],vig:.32,grain:.02,tint:[1,1,1],sat:1.18},
+  return{scene,pick:[{objects:()=>pickList,id:'night',hint:'Klik: siang atau malam'}],look:{exp:.9,bloom:[.22,.6,1.3],vig:.32,grain:.02,tint:[1,1,1],sat:1.18},
     update(t,dt,cam){
       if(cam){const ins=Math.abs(cam.position.x)<6.5&&cam.position.z<4.4&&cam.position.z>-4.2&&cam.position.y<3.4;this.look.exp=ins?lerp(.5,.85,night):lerp(.9,.9,night)}
       night+=(tgtN-night)*(1-Math.exp(-dt*1.4));

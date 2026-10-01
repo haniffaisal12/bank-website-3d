@@ -90,7 +90,7 @@ function buildNexus(ui){
   function drawPanel(t){pcx.clearRect(0,0,320,200);pcx.strokeStyle=oc?'#ff7a4a':'#4fe6ff';pcx.fillStyle=pcx.strokeStyle;pcx.lineWidth=2;pcx.strokeRect(2,2,316,196);pcx.font='700 22px monospace';pcx.fillText('NEXUS CORE',14,32);pcx.font='500 16px monospace';pcx.fillText(names[mode]+(oc?'  OC':''),14,56);
     for(let i=0;i<5;i++){const v=.35+.6*Math.abs(Math.sin(t*(.8+i*.3)+i*2))*(oc?1:.8);pcx.globalAlpha=.25;pcx.fillRect(14,74+i*22,292,10);pcx.globalAlpha=1;pcx.fillRect(14,74+i*22,292*v,10)}ptex.needsUpdate=true}
   const cA=new T.Color(),cN=new T.Color(.2,.8,1.2),cO=new T.Color(1.3,.5,.2);
-  return{scene,look:{exp:.95,bloom:[.35,.6,1.05],vig:.4,grain:.02,tint:[.97,1,1.05],sat:1.05},
+  return{scene,pick:[{objects:[holo],id:'holo',hint:'Klik: ganti model hologram'}],look:{exp:.95,bloom:[.35,.6,1.05],vig:.4,grain:.02,tint:[.97,1,1.05],sat:1.05},
     setQ(q){plaza.setHigh(q>=1);sfloor.setHigh(q>=1)},
     update(t,dt){
       plaza.tick(t);sfloor.tick(t);

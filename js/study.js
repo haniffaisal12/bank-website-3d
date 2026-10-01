@@ -1,0 +1,87 @@
+/* Data studi kasus, titik panas (hotspot) 3D, dan pemetaan audio per konsep.
+   Semua klien, angka, dan skenario di sini FIKTIF dan dibuat untuk portofolio. Angka adalah target hipotesis, bukan hasil terukur. */
+export const DISCLAIMER='Skenario fiktif untuk portofolio. Klien, tenggat, dan angka adalah asumsi dan target hipotesis, bukan hasil terukur dari proyek nyata.';
+
+export const META={
+nexus:{
+  audio:['city','city','hum','hum','hum'],
+  study:{klien:'NEXUS·AI (fiktif), penyedia infrastruktur AI untuk perusahaan besar',peran:'Konsep, arahan visual, prototipe 3D',durasi:'Skenario 6 minggu',
+   tantangan:'Pembeli korporat sulit membayangkan apa itu infrastruktur AI. Situs lama berisi diagram arsitektur dan daftar spesifikasi yang cepat membuat pengunjung pergi.',
+   pendekatan:['Ubah infrastruktur yang abstrak menjadi tempat yang bisa dimasuki: menara kaca sebagai wajah publik, server room sebagai kenyataan di baliknya.','Satu gerakan kamera tanpa cut dari luar ke dalam, supaya pengunjung merasa diajak melihat, bukan disuguhi presentasi.','Kontrol sederhana di dalam adegan (model hologram, pemindaian, overclock) menggantikan tab produk.'],
+   keputusan:[{t:'Kaca sebagai pintu',d:'Kamera menembus dinding transparan tanpa transisi, sehingga luar dan dalam terasa satu ruang.',slide:2},{t:'Hologram sebagai penjelas',d:'Tiga model (jaringan saraf, node global, kunci kuantum) mewakili tiga lini layanan tanpa kalimat teknis.',slide:3},{t:'Overclock sebagai momen jeda',d:'Satu tombol yang mengubah warna dan kecepatan memberi pengunjung alasan bermain, dan mengingatkan bahwa sistemnya bisa diskalakan.',slide:3}],
+   target:[{l:'Waktu di halaman',v:'> 3 menit'},{l:'Permintaan demo',v:'+25%'},{l:'Pengunjung sampai server room',v:'> 60%'}],
+   stack:['Three.js','Post-processing (bloom, AO)','Shader hologram','HDRI']},
+  hotspots:[{slide:0,pos:[0,22,12.4],t:'Logo di kaca',d:'Merek ditempatkan di fasad sebagai kesan pertama, sebelum pengunjung tahu apa isi gedungnya.'},{slide:3,pos:[0,3.3,-8],t:'Inti hologram',d:'Ganti model lewat tombol di bawah. Setiap model mewakili satu lini layanan.'},{slide:3,pos:[5.2,2.4,-1.8],t:'Rak server',d:'Lampu rak dikedipkan secara acak agar ruangan terasa hidup tanpa membutuhkan animasi berat.'}]},
+aqua:{
+  audio:['sea','sea','under','under','under'],
+  study:{klien:'AQUARIA (fiktif), toko akuarium dan biota laut daring',peran:'Konsep, arahan visual, prototipe 3D e-commerce',durasi:'Skenario 8 minggu',
+   tantangan:'Toko ikan hias daring bersaing dengan foto yang mirip satu sama lain. Pembeli ragu karena tidak bisa melihat bagaimana ikan dan karang hidup bersama.',
+   pendekatan:['Etalase dibuat sebagai dunia bawah laut yang bisa dijelajahi, bukan grid foto.','Pengunjung memberi makan ikan untuk melihat perilakunya sebelum membeli.','Label produk melayang di dekat karang dan langsung bisa ditambahkan ke keranjang.'],
+   keputusan:[{t:'Gerbang dan penyelaman',d:'Permukaan air yang dipecah kamera memberi satu momen yang diingat, dan memisahkan dunia darat dari toko.',slide:2},{t:'Beri makan sebagai interaksi',d:'Ikan mengejar pelet sehingga pengunjung melihat perilaku nyata, sekaligus bermain dengan produk.',slide:3},{t:'Voucher dari permainan',d:'Setelah memberi makan 15 ikan, kode PAKAN10 terbuka. Interaksi diberi imbalan.',slide:3}],
+   target:[{l:'Waktu di toko',v:'> 4 menit'},{l:'Rasio masuk keranjang',v:'+30%'},{l:'Pengunjung memberi makan',v:'> 50%'}],
+   stack:['Three.js','Air dengan pantulan (Water)','Kaustik shader','Steering ikan']},
+  hotspots:[{slide:0,pos:[0,7.5,0],t:'Gerbang',d:'Gerbang merah menandai batas antara dunia luar dan toko. Matahari terbenam ditempatkan tepat di belakangnya.'},{slide:3,pos:[-8,-14,-20],t:'Acropora Neon',d:'Karang keras dengan cahaya tersendiri. Tekan Tambah ke keranjang untuk memasukkannya.'},{slide:3,pos:[7,-14,-21],t:'Anemon bubble-tip',d:'Tentakelnya bercahaya agar produk ini menarik perhatian dari kejauhan.'}]},
+serena:{
+  audio:['sea','sea','garden','garden','sea','sea'],
+  study:{klien:'SERENA (fiktif), resor butik di pulau tropis',peran:'Konsep, arahan visual, prototipe 3D',durasi:'Skenario 7 minggu',
+   tantangan:'Foto resor tampak sama di semua situs pemesanan. Tamu tidak bisa merasakan perbedaan siang dan malam, padahal malam adalah daya tarik utama resor ini.',
+   pendekatan:['Perjalanan dari udara ke kamar meniru urutan tamu sungguhan: pulau, pantai, pintu, tempat tidur.','Suasana siang atau malam menjadi tombol utama, bukan galeri foto.','Pesan kamar ditempatkan di dek menghadap laut, saat keinginan memesan paling kuat.'],
+   keputusan:[{t:'Bird-eye di awal',d:'Dari atas, tamu paham skala dan letak villa sebelum melihat detailnya.',slide:0},{t:'Siang jadi malam',d:'Lampu, kolam, obor, bulan, dan langit berubah pelan dalam satu parameter. Ini fitur yang tidak bisa dilakukan foto.',slide:3},{t:'Pesan di dek',d:'Tombol pesan muncul di akhir perjalanan, di tempat pemandangannya paling meyakinkan.',slide:4}],
+   target:[{l:'Waktu di situs',v:'> 3 menit'},{l:'Klik Pesan',v:'+20%'},{l:'Memakai toggle malam',v:'> 70%'}],
+   stack:['Three.js','Sky fisik dan IBL dinamis','Water','Lampu gantung glTF']},
+  hotspots:[{slide:0,pos:[0,2,20],t:'Kolam utama',d:'Kolam menyala di malam hari dan menjadi titik cahaya pertama yang terlihat dari udara.'},{slide:3,pos:[-1.7,4.3,.3],t:'Lampu gantung kuningan',d:'Model berdetail tinggi satu-satunya di kamar. Satu objek bagus lebih berguna daripada banyak objek biasa.'},{slide:3,pos:[-2.4,1.3,0],t:'Tempat tidur',d:'Kain dan rotan memakai tekstur prosedural, jadi tidak ada gambar yang perlu diunduh.'}]},
+flora:{
+  audio:['garden','garden','garden','garden','garden'],
+  study:{klien:'FLORA (fiktif), toko tanaman hias dan rumah kaca',peran:'Konsep, arahan visual, prototipe 3D e-commerce',durasi:'Skenario 6 minggu',
+   tantangan:'Pembeli tanaman takut membeli tanpa melihat ukuran dan kondisi tanaman. Foto produk tidak menunjukkan bagaimana tanaman tumbuh.',
+   pendekatan:['Rumah kaca dibuat sebagai tempat berjalan yang tenang, bukan katalog.','Tombol Siram menunjukkan tanaman tumbuh dan berbunga, memberi gambaran perawatan.','Dua produk unggulan ditempatkan di pedestal dengan harga dan tombol keranjang.'],
+   keputusan:[{t:'Kabut pagi',d:'Warna lembut dan kabut membuat suasana tenang dan menutupi detail jauh yang tidak perlu.',slide:0},{t:'Siram dan tumbuh',d:'Setiap tanaman tumbuh sedikit demi sedikit. Pengunjung merasakan hasil perawatan.',slide:3},{t:'Lampu tumbuh',d:'Cahaya magenta mengubah suasana ruangan dan memperkenalkan produk pelengkap.',slide:3}],
+   target:[{l:'Rasio masuk keranjang',v:'+25%'},{l:'Pengembalian karena ukuran',v:'-15%'},{l:'Memakai tombol Siram',v:'> 60%'}],
+   stack:['Three.js','Instancing rumput dan pohon','Daun geometri','Bayangan lembut']},
+  hotspots:[{slide:0,pos:[0,8.5,0],t:'Rumah kaca',d:'Kubah kaca terlihat seperti lentera dari jauh dan mengundang pengunjung mendekat.'},{slide:3,pos:[-2.4,1.6,6],t:'Monstera Deliciosa',d:'Produk unggulan pertama. Harga dan tombol keranjang ada di slide ini.'},{slide:3,pos:[4.3,6.2,0],t:'Pipa penyiram',d:'Dua puluh nozzle meneteskan air saat Siram ditekan.'}]},
+kaze:{
+  audio:['rain','rain','shop','shop','shop'],
+  study:{klien:'KAZE 風 (fiktif), butik sneaker edisi terbatas',peran:'Konsep, arahan visual, prototipe 3D e-commerce',durasi:'Skenario 8 minggu',
+   tantangan:'Peluncuran edisi terbatas menarik penonton muda yang bosan dengan halaman produk biasa. Mereka ingin merasakan kota dan suasana toko.',
+   pendekatan:['Gang neon hujan menjadi pintu masuk, dengan palet yang bisa diubah.','Di dalam, tiga pedestal fokus pada satu keputusan: pilih colorway.','Layar LED menampilkan peluncuran dan harga sehingga informasi tetap ada di ruang.'],
+   keputusan:[{t:'Palet neon yang bisa diubah',d:'Cyber, Sunset, dan Jade mengubah seluruh gang. Pengunjung merasa memengaruhi dunianya.',slide:1},{t:'Tiga pedestal',d:'Jumlah pilihan dibatasi agar keputusan tetap mudah.',slide:3},{t:'Hujan hanya di luar',d:'Hujan berhenti begitu masuk toko, dan itu memberi rasa aman dan fokus.',slide:3}],
+   target:[{l:'Rasio masuk keranjang',v:'+35%'},{l:'Waktu di toko',v:'> 3 menit'},{l:'Ganti colorway ≥ 2 kali',v:'> 55%'}],
+   stack:['Three.js','Lantai basah (Reflector)','Neon dan bloom','Sepatu prosedural']},
+  hotspots:[{slide:0,pos:[0,5.4,-8],t:'Papan nama toko',d:'Papan neon besar adalah satu-satunya penanda arah di gang yang gelap.'},{slide:3,pos:[0,2.4,-16],t:'Pedestal utama',d:'Sepatu berputar di bawah lampu sorot. Ganti colorway lewat tombol di bawah.'},{slide:3,pos:[0,3.6,-23.8],t:'Layar peluncuran',d:'Teks berjalan di layar LED menampilkan nama produk dan harga di dalam adegan.'}]},
+celeste:{
+  audio:['night','night','dome','dome','dome'],
+  study:{klien:'CELESTE (fiktif), toko teleskop dan observatorium wisata',peran:'Konsep, arahan visual, prototipe 3D',durasi:'Skenario 7 minggu',
+   tantangan:'Teleskop dijual lewat spesifikasi yang sulit dibandingkan. Calon pembeli ingin tahu rasanya mengamati, bukan angka apertur.',
+   pendekatan:['Pembeli diajak naik ke observatorium, masuk kubah, dan mengarahkan teleskop sendiri.','Langit menjadi etalase: planet, nebula, dan rasi bintang menunjukkan apa yang bisa dilihat.','Produk ditempatkan di meja, dengan harga dan tombol keranjang.'],
+   keputusan:[{t:'Bulan besar, kubah kecil',d:'Skala memberi rasa luas langit sehingga pengunjung mengerti kenapa mereka mau mengamati.',slide:0},{t:'Celah kubah',d:'Dua belahan kubah bergeser. Gerakan mekanis ini mudah dimengerti dan memuaskan.',slide:3},{t:'Arahkan teleskop',d:'Teleskop benar-benar berputar menuju planet yang dipilih, menjadi bukti bahwa produk ini bekerja.',slide:3}],
+   target:[{l:'Waktu di situs',v:'> 4 menit'},{l:'Klik produk',v:'+30%'},{l:'Mengganti target',v:'> 65%'}],
+   stack:['Three.js','Langit Bimasakti prosedural','Aurora shader','Kuaternion slerp']},
+  hotspots:[{slide:0,pos:[0,12,0],t:'Kubah observatorium',d:'Satu-satunya bangunan di lanskap, ditandai cahaya hangat di pintunya.'},{slide:3,pos:[-1.9,3.3,-1.2],t:'Teleskop refraktor',d:'Tabungnya berputar ke target yang dipilih. Pilih Arahkan untuk mengganti planet.'},{slide:3,pos:[2.6,2.3,-2.4],t:'Meja peta bintang',d:'Meja dengan peta langit dan globe selestial yang berputar pelan.'}]},
+volt:{
+  audio:['city','showroom','showroom','showroom','showroom'],
+  study:{klien:'VOLT (fiktif), merek SUV listrik',peran:'Konsep, arahan visual, prototipe 3D e-commerce',durasi:'Skenario 10 minggu',
+   tantangan:'Pembeli mobil listrik membandingkan banyak merek lewat halaman konfigurator datar. Merek baru butuh alasan untuk diingat.',
+   pendekatan:['Showroom malam dengan satu mobil di piringan putar, tanpa gangguan visual.','Konfigurator berada di adegan: cat, velg, dan lampu depan.','Harga dan tombol keranjang selalu terlihat di dekat mobil.'],
+   keputusan:[{t:'Lorong cahaya',d:'Cincin lampu memberi ritme dan arah, dan membuat pengunjung merasa menuju sesuatu yang penting.',slide:2},{t:'Konfigurator langsung',d:'Mengganti cat dan velg langsung terlihat di model 3D, bukan gambar yang dimuat ulang.',slide:3},{t:'Lampu depan menyala',d:'Satu tombol untuk momen paling sinematik: sorotan lampu di aula gelap.',slide:3}],
+   target:[{l:'Konfigurasi selesai',v:'+30%'},{l:'Waktu di konfigurator',v:'> 4 menit'},{l:'Permintaan uji kendara',v:'+20%'}],
+   stack:['Three.js','Model Blender (glTF)','Clearcoat','Lantai basah']},
+  hotspots:[{slide:0,pos:[0,13,-9.5],t:'Papan VOLT',d:'Tulisan neon lime menjadi satu-satunya warna aksen di plaza yang dingin.'},{slide:3,pos:[0,1.3,-44],t:'Mobil di piringan',d:'Piringan berputar pelan. Berhentikan putaran untuk memeriksa satu sisi.'},{slide:3,pos:[0,.5,-44],t:'Cincin cahaya',d:'Cincin menandai area konfigurasi dan memantul di lantai basah.'}]},
+genom:{
+  audio:['cell','cell','cell','cell','cell'],
+  study:{klien:'HELIX (fiktif), klinik genomik dan laboratorium sekuensing',peran:'Konsep, arahan visual, prototipe 3D',durasi:'Skenario 8 minggu',
+   tantangan:'Layanan genomik terdengar rumit dan menakutkan. Calon pasien butuh gambaran sederhana tentang apa yang dibaca dan kenapa itu penting.',
+   pendekatan:['Perjalanan dari sel ke DNA mengajarkan konsep tanpa teks panjang.','Heliks yang bisa diurai menunjukkan bahwa gen adalah urutan pasangan basa.','Tiga layanan ditandai sebagai segmen berwarna pada heliks yang sama.'],
+   keputusan:[{t:'Mulai dari satu sel',d:'Pengunjung melihat ukuran relatif. Satu sel memuat seluruh instruksi tubuh.',slide:0},{t:'Urai heliks',d:'Pasangan basa terpisah dari arah kamera, seperti gerakan membuka buku.',slide:3},{t:'Segmen layanan',d:'Menyorot segmen heliks menghubungkan layanan abstrak dengan sesuatu yang dapat dilihat.',slide:3}],
+   target:[{l:'Waktu di halaman',v:'> 3 menit'},{l:'Pendaftaran konsultasi',v:'+25%'},{l:'Memilih layanan',v:'> 50%'}],
+   stack:['Three.js','Instancing 700 pasangan basa','Iridescence','Bloom']},
+  hotspots:[{slide:0,pos:[0,0,0],t:'Inti sel',d:'Di sinilah DNA tersimpan. Kamera akan menuju ke sana.'},{slide:2,pos:[0,0,0],t:'Kromatin',d:'DNA yang tergulung rapat di dalam inti.'},{slide:3,pos:[7,.4,-10.5],t:'Pasangan basa',d:'A berpasangan dengan T, C dengan G. Urai heliks untuk melihat pasangan itu terpisah.'}]},
+kopi:{
+  audio:['volcano','garden','roastery','roastery','roastery'],
+  study:{klien:'KAWAH KOPI (fiktif), kedai dan roastery kopi dari lereng gunung api',peran:'Konsep, arahan visual, prototipe 3D e-commerce',durasi:'Skenario 7 minggu',
+   tantangan:'Banyak merek kopi menjual cerita asal-usul lewat foto kebun yang mirip. Pembeli tidak merasakan hubungan antara tanah, sangrai, dan rasa.',
+   pendekatan:['Asal-usul ditunjukkan sebagai perjalanan: kawah, kebun, roastery.','Pembeli mengatur tingkat sangrai dan melihat biji, suhu, dan profil rasa berubah.','Seduh satu cangkir menutup perjalanan dan mengarah ke keranjang.'],
+   keputusan:[{t:'Kawah sebagai pembuka',d:'Lava dan asap menekankan tanah vulkanik, alasan di balik rasa kopi ini.',slide:0},{t:'Sangrai yang terlihat',d:'Warna biji berubah bersama suhu dan profil rasa, sehingga pilihan menjadi mudah dipahami.',slide:3},{t:'Seduh sebagai penutup',d:'Cangkir terisi dan uap naik. Momen sensorik ini ditempatkan sebelum tombol keranjang.',slide:3}],
+   target:[{l:'Rasio masuk keranjang',v:'+30%'},{l:'Pembelian ulang',v:'+15%'},{l:'Mengganti sangrai',v:'> 60%'}],
+   stack:['Three.js','Heightfield gunung api','Instancing kebun','Biji berwarna per instance']},
+  hotspots:[{slide:0,pos:[0,72,-175],t:'Kawah',d:'Danau lava memberi cahaya jingga di lanskap fajar. Tombol Kawah mengaktifkan letusan kecil.'},{slide:1,pos:[-10,3,-40],t:'Teras kebun',d:'Ceri merah menandai yang siap petik. Dinding batu menahan tanah di setiap teras.'},{slide:3,pos:[-3.4,1.5,-73.4],t:'Mesin sangrai',d:'Drum berputar dan biji di baki berubah warna sesuai tingkat sangrai yang dipilih.'},{slide:3,pos:[4.5,1.8,-71.8],t:'Meja seduh',d:'Tekan Seduh untuk melihat cerat menuang dan cangkir terisi.'}]}
+};

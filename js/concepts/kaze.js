@@ -113,7 +113,7 @@ function buildKaze(ui){
   applyPal();let lastL=0;
   function applyWay(){ped.forEach((s,i)=>{const c=ways[(wi+i)%4],m=s.userData.m;m.mU.color.setHex(c[0]);m.mA.color.setHex(c[1]);m.mS.color.setHex(c[2])});ui.stat('way',ways[(wi+1)%4][3])}
   setTimeout(()=>ui.stat('way',ways[1][3]),0);
-  return{scene,look:{exp:1,bloom:[.38,.75,1.05],vig:.42,grain:.025,tint:[1,.98,1.04],sat:1.1},
+  return{scene,pick:[{objects:()=>ped,id:'way',hint:'Klik: ganti colorway'}],look:{exp:1,bloom:[.38,.75,1.05],vig:.42,grain:.025,tint:[1,.98,1.04],sat:1.1},
     setQ(q){street.setHigh(q>=1);sfl.setHigh(q>=1)},
     update(t,dt,cam){
       street.tick(t);sfl.tick(t);

@@ -140,7 +140,7 @@ function buildAqua(ui){
   const pellets=[];for(let i=0;i<40;i++){const m=Sph(.14,new T.MeshStandardMaterial({color:0xff9a3a,emissive:0xff6a10,emissiveIntensity:.8,roughness:.6}),0,0,0,scene,10,8);m.visible=false;pellets.push({m,a:false,sp:1,ph:0})}
   let fed=0,cartN=0;const tmp=V(0,0,0),desired=V(0,0,0),cart=Cart(ui);
   const B={x:[-28,28],y:[-19.5,-4],z:[-43,-10]};
-  return{scene,look:{exp:.75,bloom:[.3,.7,1.5],vig:.4,grain:.02,tint:[1,1,1],sat:1.05},
+  return{scene,pick:[{objects:()=>fish.map(f=>f.g),id:'feed',hint:'Klik: beri makan ikan'}],look:{exp:.75,bloom:[.3,.7,1.5],vig:.4,grain:.02,tint:[1,1,1],sat:1.05},
     setQ(q){water.visible=true},
     update(t,dt,cam){
       const k=clamp((.6-cam.position.y)/2.2,0,1);scene.background.copy(skyC).lerp(deepC,k);scene.fog.color.copy(scene.background);scene.fog.density=lerp(.0028,.03,k);

@@ -87,7 +87,7 @@ function buildVolt(ui){
   const beams=[-1,1].map(s=>{const sp=new T.SpotLight(0xdfe8ff,0,26,.32,.6,2);sp.position.set(2.2,.66,s*.62);sp.target.position.set(9,.4,s*1.2);car.add(sp,sp.target);return sp});
   const cone=mesh(new T.ConeGeometry(2.2,7,24,1,true),new T.MeshBasicMaterial({color:0xbfd8ff,transparent:true,opacity:0,blending:T.AdditiveBlending,depthWrite:false,side:T.DoubleSide,toneMapped:false}),5.6,.6,0,car);cone.rotation.z=Math.PI/2;cone.castShadow=false;
   let pi=0,spin=1,lightsOn=false,cartN=0,rot=.5;const cart=Cart(ui);
-  return{scene,look:{exp:1,bloom:[.35,.7,1.05],vig:.42,grain:.02,tint:[.98,1,1.03],sat:1.08},
+  return{scene,pick:[{objects:()=>[car],id:'paint',hint:'Klik: ganti warna cat'}],look:{exp:1,bloom:[.35,.7,1.05],vig:.42,grain:.02,tint:[.98,1,1.03],sat:1.08},
     setQ(q){plaza.setHigh(q>=1);hfl.setHigh(q>=1)},
     update(t,dt,cam){
       plaza.tick(t);hfl.tick(t);
