@@ -1,3 +1,4 @@
+import {cart as CS,totals as CSt} from './site/store.js';
 import * as T from 'three';
 import {EffectComposer} from 'three/addons/postprocessing/EffectComposer.js';
 import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
@@ -124,7 +125,11 @@ const stdM=(c,o)=>new T.MeshStandardMaterial(Object.assign({color:c,roughness:.6
 const physM=(c,o)=>new T.MeshPhysicalMaterial(Object.assign({color:c,roughness:.5,metalness:0},o||{}));
 const emis=(c,i,o)=>new T.MeshStandardMaterial(Object.assign({color:0x000000,emissive:c,emissiveIntensity:i==null?2:i,roughness:.6},o||{}));
 function sunLight(col,intensity,pos,ext,size){const l=new T.DirectionalLight(col,intensity);l.position.copy(pos);l.castShadow=true;l.shadow.mapSize.set(size||2048,size||2048);const c=l.shadow.camera;c.left=-ext;c.right=ext;c.top=ext;c.bottom=-ext;c.near=1;c.far=ext*6;l.shadow.bias=-.0004;l.shadow.normalBias=.04;l.shadow.radius=3;return l}
-function Cart(ui){let n=0,sum=0;return function(name,price){n++;sum+=price;ui.stat('cart',n+' item · Rp '+sum.toLocaleString('id-ID'))}}
+function Cart(ui){let n=0,sum=0;return function(name,price){
+  const s=ui.site&&ui.site(),l=String(name).toLowerCase(),p=s&&s.products.find(x=>(x.kw||[]).some(k=>l.includes(k)));
+  if(p){const vr=p.variants?Object.fromEntries(p.variants.map(g=>[g.key,(g.values.find(v=>l.includes(v.v.toLowerCase()))||g.values[0]).v])):null;
+    CS.add(s.id,p.id,vr,1);const t=CSt(s,s.id);ui.stat('cart',t.qty+' item · Rp '+Math.round(t.sub-t.disc).toLocaleString('id-ID'));ui.sfx('coin');return}
+  n++;sum+=price;ui.stat('cart',n+' item · Rp '+sum.toLocaleString('id-ID'))}}
 
 /* ---------- lantai basah / mengilap (Reflector dengan shader sendiri) ---------- */
 function floorMat(rep,hf,base){return pbr({fx:8,fy:8,oct:5,seed:5,c0:base[0],c1:base[1],nS:base[2]||2,r0:.35,r1:.85,rep:[1,1],hf,w:256})}

@@ -191,3 +191,9 @@ body .grid6{grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr))}
 [hidden]{display:none!important}
 @media (max-width:560px){#bQ{display:none}.tools{gap:5px}.tb{padding:.4rem .55rem}.brand{max-width:84px}}
 @media (max-width:760px){#dots{display:none!important}}
+
+/* mode tangkap gambar (?bare=1): hanya adegan 3D, tanpa UI */
+body.bare .slide *{visibility:hidden!important}body.bare .hud,body.bare #toast,body.bare #prog,body.bare .hs,body.bare .rip,body.bare #pickHint{display:none!important}
+a.tb{text-decoration:none;display:inline-block}#bSite{border-color:var(--acc);color:var(--acc)}
+.sitelinks{margin:0;font-size:.74rem;color:var(--mute);display:flex;flex-wrap:wrap;gap:.3rem .8rem;align-items:center}.sitelinks a{color:var(--c);text-decoration:none;border-bottom:1px solid currentColor}.sitelinks b{font-weight:500}
+@media (max-width:560px){.sitelinks{display:none}}
