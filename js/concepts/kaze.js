@@ -1,8 +1,9 @@
 /* Konsep kaze — modul mandiri, dimuat oleh concepts/kaze.html */
-import {$,AC,BGU,Box,CY,Cart,Cyl,EXRLoader,EffectComposer,GTAOPass,OutputPass,RBox,Reflector,RenderPass,RoundedBoxGeometry,ST,ShaderPass,Sky,Sph,T,TG,UnrealBloomPass,V,Water,brickHF,camera,canvas,clamp,ctex,dtex,emis,envCache,fbm,floorMat,glow,glowTex,hdri,hex2,leafGeo,leafMat,leafTexture,lerp,loadHdri,makeSky,mesh,noShadow,pbr,perfHF,physM,plankHF,pmrem,reduce,renderer,ridgeHF,rnd,rng,sstep,starField,stdM,sunDir,sunLight,tagSprite,textTex,tileHF,waterNormal,weaveHF,wetFloor,windowTex} from '../core.js';
+import {loadModel,$,AC,BGU,Box,CY,Cart,Cyl,EXRLoader,EffectComposer,GTAOPass,OutputPass,RBox,Reflector,RenderPass,RoundedBoxGeometry,ST,ShaderPass,Sky,Sph,T,TG,UnrealBloomPass,V,Water,brickHF,camera,canvas,clamp,ctex,dtex,emis,envCache,fbm,floorMat,glow,glowTex,hdri,hex2,leafGeo,leafMat,leafTexture,lerp,loadHdri,makeSky,mesh,noShadow,pbr,perfHF,physM,plankHF,pmrem,reduce,renderer,ridgeHF,rnd,rng,sstep,starField,stdM,sunDir,sunLight,tagSprite,textTex,tileHF,waterNormal,weaveHF,wetFloor,windowTex} from '../core.js';
 /* ==========================================================
    KONSEP 5 — KAZE : gang neon hujan -> toko sneaker
    ========================================================== */
+const SHOE_M={lace:new T.MeshStandardMaterial({color:0xf4f4f2,roughness:.9}),metal:new T.MeshStandardMaterial({color:0xcfd4da,metalness:.9,roughness:.3}),lining:new T.MeshStandardMaterial({color:0x121218,roughness:.95})};
 function buildShoe(cw){
   const g=new T.Group(),[cu,ca,cs]=cw;
   const knit=pbr({hf:weaveHF(48),fx:3,fy:3,oct:2,c0:0x808080,c1:0xffffff,nS:2.4,r0:.75,r1:.95,rep:[3,2],w:256});
@@ -39,7 +40,11 @@ function buildShoe(cw){
     const tail=new T.CatmullRomCurve3([V(-.18,.7,0),V(-.08,.62,sd*.18),V(.02,.5,sd*.25)]);g.add(new T.Mesh(new T.TubeGeometry(tail,10,.014,6),bowM))});
   const tab=RBox(.05,.24,.12,.025,mA,-1.05,.68,0,g);tab.rotation.z=.18;
   const pad=new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3([V(-.15,.62,-.2),V(-.5,.78,-.26),V(-.88,.8,-.2),V(-1.0,.74,0),V(-.88,.8,.2),V(-.5,.78,.26),V(-.15,.62,.2)]),40,.06,8),mU);pad.castShadow=true;g.add(pad);
-  g.userData.m={mU,mA,mS};g.userData.parts={mU,mA,mS};return g}
+  g.userData.m={mU,mA,mS};g.userData.parts={mU,mA,mS};
+  // model Blender (blender/kaze_sneaker.py) menggantikan geometri prosedural begitu termuat; bahan tetap sama agar colorway bekerja
+  const MAP={Upper:mU,Aksen:mA,Sol:mS,Midsole:mF,Tali:SHOE_M.lace,Logam:SHOE_M.metal,Dalam:SHOE_M.lining};
+  g.userData.ready=loadModel('sneaker').then(({scene:m})=>{m.traverse(o=>{if(!o.isMesh)return;o.material=MAP[o.material.name]||o.material;o.castShadow=o.receiveShadow=true});g.clear();g.add(m);return g}).catch(()=>g);
+  return g}
 function buildKaze(ui){
   const scene=new T.Scene();scene.background=new T.Color(0x0a0612);scene.fog=new T.FogExp2(0x100a1c,.022);
   scene.environment=hdri('city');scene.environmentIntensity=.16;

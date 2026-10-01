@@ -37,6 +37,27 @@ blender -b -P blender/aqua_clownfish.py     # keluaran: blender/out/clownfish.gl
 cp blender/out/clownfish.glb assets/models/clownfish.glb
 ```
 
+## Sepatu KAZE
+
+`kaze_sneaker.py` membangun Air Kaze 02 dari satu jejak kaki dan satu fungsi permukaan upper: outsole dan midsole
+dengan toe spring, alur, dan tapak; upper dengan bukaan kerah elips; overlay yang menempel mengikuti normal permukaan
+(toe cap, heel counter melengkung, garis angin); eyestay, mata tali, tali bersilang dengan simpul, lidah, bantalan kerah,
+dan tab tumit. Bahan bernama (Upper, Aksen, Sol, Midsole, Tali, Logam, Dalam) diganti di `buildShoe` (`js/concepts/kaze.js`)
+dengan bahan colorway yang sama, jadi tombol colorway tetap bekerja. Sekitar 27 ribu segitiga.
+
+## Alat seduh KAWAH KOPI
+
+`kopi_alat_seduh.py` membangun set V60 (dripper keramik dengan 12 rusuk spiral, satu lubang besar, pegangan;
+kertas saring berlipat; server kaca bertebal dengan cerat, pegangan, dan kopi) dan ketel leher angsa (badan baja, tutup
+kubah dan kenop, cerat meruncing, pegangan hitam dengan braket). Dipakai oleh `js/world/kopi.js` untuk rak, pajangan 360°,
+dan gambar katalog; warna keramik mengikuti varian (Hitam arang, Putih, Terakota).
+
+```bash
+blender -b -P blender/kaze_sneaker.py       # blender/out/sneaker.glb
+blender -b -P blender/kopi_alat_seduh.py    # blender/out/v60_set.glb, blender/out/gooseneck.glb
+cp blender/out/{sneaker,v60_set,gooseneck}.glb assets/models/
+```
+
 ## Status
 
 Mobil sudah terbaca sebagai mobil dan detailnya lebih kaya daripada versi loft sebelumnya, tetapi proporsinya masih

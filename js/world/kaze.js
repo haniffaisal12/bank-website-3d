@@ -1,6 +1,6 @@
 /* KAZE 風 — butik sneaker di gang hujan. Gang = beranda, menyusuri neon = cerita, kaca etalase = kontak,
    meja drop = katalog, pedestal tengah = produk 360°, meja kasir = keranjang. */
-import {T,V,Box,RBox,Cyl,mesh} from '../core.js';
+import {T,V,Box,RBox,Cyl,mesh,loadModel} from '../core.js';
 import {world} from './world.js';
 import {label,shelf,pedestal,counter,wireShop} from './kit.js';
 import * as shop from './shop.js';
@@ -10,8 +10,12 @@ import {concept,buildShoe} from '../concepts/kaze.js';
 
 /* ---------- model produk ---------- */
 const CW={Cyber:[0x141420,0x00e5ff,0xe8e8ec],Sunset:[0xff5a2b,0xffe14a,0xd8d8dc],Jade:[0x153a30,0x5bffb0,0xe8e8ec]},NEO={Hitam:[0x121214,0xff2bd6,0x2a2a2e],Putih:[0xf2f2f2,0xb8b8c0,0xf4f4f0]};
+/* sepatu Blender dimuat dulu agar rak, pajangan, dan gambar katalog langsung memakainya (lihat buildShoe) */
+await loadModel('sneaker').catch(()=>{});
 const shoeCache={};
-function shoe(c,key){const s=(shoeCache[key]||(shoeCache[key]=buildShoe(c))).clone();s.scale.setScalar(.12);const G=new T.Group();s.position.y=.018;G.add(s);return G}
+function shoe(c,key){const base=shoeCache[key]||(shoeCache[key]=buildShoe(c)),s=base.clone();s.scale.setScalar(.12);const G=new T.Group();s.position.y=.018;G.add(s);
+  // salinan dibuat sebelum model Blender termuat: ganti isinya setelah termuat
+  base.userData.ready.then(()=>{s.clear();base.children.forEach(ch=>s.add(ch.clone()))});return G}
 function jacket(vr){const G=new T.Group(),cloth=new T.MeshStandardMaterial({color:0x22222a,roughness:.75}),refl=new T.MeshBasicMaterial({color:new T.Color(1.8,1.8,1.9),toneMapped:false}),hm=new T.MeshStandardMaterial({color:0x8a8f96,metalness:.9,roughness:.3});
   const hook=new T.Mesh(new T.TorusGeometry(.03,.004,6,16,Math.PI*1.4),hm);hook.position.y=.66;G.add(hook);const bar=new T.Mesh(new T.CylinderGeometry(.004,.004,.36,6),hm);bar.rotation.z=Math.PI/2;bar.position.y=.6;G.add(bar);
   const body=RBox(.36,.46,.11,.04,cloth,0,.36,0,G);[-1,1].forEach(s=>{const sl=new T.Mesh(new T.CapsuleGeometry(.045,.36,6,12),cloth);sl.position.set(s*.22,.38,0);sl.rotation.z=s*.28;G.add(sl);const st=new T.Mesh(new T.CylinderGeometry(.047,.047,.02,12),refl);st.position.set(s*.25,.27,0);st.rotation.z=s*.28;G.add(st)});

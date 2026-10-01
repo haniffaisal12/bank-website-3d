@@ -1,7 +1,8 @@
 /* KAWAH KOPI — situs e-commerce yang hidup di dalam adegan 3D konsepnya.
    Kawah = beranda, kebun = cerita, roastery = proses & kontak, ruang sangrai, meja seduh, rak toko, pajangan produk 360°, kasir.
-   Produk dimodelkan prosedural (kemasan berlabel, dripper, ketel, gelas, kotak langganan) dan dipakai di rak, di pajangan, dan sebagai gambar katalog. */
-import {T,V,Box,RBox,Cyl,mesh,canvas,ctex,clamp,sstep} from '../core.js';
+   Produk dimodelkan prosedural (kemasan berlabel, gelas, kotak langganan) atau dari Blender (set V60, ketel) dan dipakai di rak,
+   di pajangan, dan sebagai gambar katalog. */
+import {T,V,Box,RBox,Cyl,mesh,canvas,ctex,clamp,sstep,loadModel} from '../core.js';
 import {lath,speckle,shelf,pedestal,counter,wireShop} from './kit.js';
 import {world} from './world.js';
 import * as shop from './shop.js';
@@ -37,6 +38,10 @@ function boxLabel(vr){const key='box'+JSON.stringify(vr);if(texCache[key])return
   g.fillStyle='#1b100b';g.textAlign='center';g.font='800 46px Georgia,serif';g.fillText('KAWAH KOPI',w/2,78);g.fillStyle='#e0561a';g.fillRect(40,104,w-80,6);g.fillStyle='#1b100b';g.font='700 34px system-ui';g.fillText('LANGGANAN',w/2,156);g.font='500 24px system-ui';g.fillText('2 × 200 g · '+((vr&&vr.Frekuensi)||'Tiap 2 minggu').toLowerCase(),w/2,200);return texCache[key]=ctex(c)}
 
 /* ---------- model produk ---------- */
+/* set V60 dan ketel dari Blender (blender/kopi_alat_seduh.py); dimuat sebelum toko dibangun agar rak, pajangan, dan gambar
+   katalog memakainya. Bila gagal dimuat, model prosedural di bawah tetap dipakai. */
+const GLB={};await Promise.all(['v60_set','gooseneck'].map(n=>loadModel(n).then(r=>{GLB[n]=r.scene}).catch(()=>{})));
+function fromGlb(src,MAP){const G=src.clone(true);G.traverse(o=>{if(!o.isMesh)return;o.material=MAP[o.material.name]||o.material;o.castShadow=o.material.transparent!==true});return G}
 function bagGeo(){const g=new T.BoxGeometry(.16,.24,.075,8,18,4),p=g.attributes.position;for(let i=0;i<p.count;i++){let x=p.getX(i),y=p.getY(i),z=p.getZ(i);const t=(y+.12)/.24;
   z*=1-sstep(.6,1,t)*.9;z+=Math.sign(z)*.006*Math.sin(Math.PI*clamp(t*1.2,0,1))*Math.cos(x/.08*Math.PI/2);x*=1+.03*Math.sin(Math.PI*t);if(t<.02)z*=1.05;p.setXYZ(i,x,y,z)}g.computeVertexNormals();return g}
 let BAGG=null;
@@ -47,7 +52,11 @@ function bag(pid,vr){BAGG=BAGG||bagGeo();const lava=pid==='blend-lava';const bas
   const valve=new T.Mesh(new T.CylinderGeometry(.009,.009,.004,16),new T.MeshStandardMaterial({color:lava?0x2a2a2a:0xe8dcc8,roughness:.4}));valve.rotation.x=Math.PI/2;valve.position.set(.045,.19,.035);G.add(valve);
   const s=vr&&vr.Berat==='1 kg'?1.42:vr&&vr.Berat==='500 g'?1.2:1;G.scale.setScalar(s);return G}
 function v60(vr){const col={'Hitam arang':0x1d1b1a,'Putih':0xeeeae4,'Terakota':0xb3603a}[(vr&&vr.Warna)||'Hitam arang'];const cer=new T.MeshPhysicalMaterial({color:col,roughness:.28,clearcoat:.6,side:T.DoubleSide});
-  const G=new T.Group();const glass=new T.MeshPhysicalMaterial({color:0xffffff,roughness:.04,transparent:true,opacity:.16,clearcoat:1,side:T.DoubleSide,depthWrite:false});
+  const glass=new T.MeshPhysicalMaterial({color:0xffffff,roughness:.04,transparent:true,opacity:.16,clearcoat:1,side:T.DoubleSide,depthWrite:false});
+  // kaca model Blender sudah bertebal (sisi luar + dalam): cukup satu sisi, dan warnanya gelap agar dua lapis kaca tidak
+  // menyala putih di bawah lampu sorot dan menutupi warna kopi; kilau tetap dari clearcoat dan lingkungan
+  if(GLB.v60_set)return fromGlb(GLB.v60_set,{Keramik:cer,Kaca:new T.MeshPhysicalMaterial({color:0x223038,roughness:.03,transparent:true,opacity:.16,clearcoat:1,depthWrite:false}),Kopi:new T.MeshStandardMaterial({color:0x1e0e06,roughness:.3,envMapIntensity:.35}),Kertas:new T.MeshStandardMaterial({color:0xf3eee4,roughness:.95,side:T.DoubleSide})});
+  const G=new T.Group();
   const srv=new T.Mesh(lath([[.001,0],[.05,0],[.058,.02],[.06,.07],[.05,.105],[.044,.115]],40),glass);G.add(srv);
   const coffee=new T.Mesh(lath([[.001,.004],[.05,.004],[.056,.02],[.057,.045],[.001,.045]],32),new T.MeshStandardMaterial({color:0x2a1408,roughness:.15}));G.add(coffee);
   const hd=new T.Mesh(new T.TorusGeometry(.026,.006,10,24,Math.PI),glass);hd.rotation.z=-Math.PI/2;hd.position.set(.066,.06,0);G.add(hd);
@@ -57,7 +66,9 @@ function v60(vr){const col={'Hitam arang':0x1d1b1a,'Putih':0xeeeae4,'Terakota':0
   const hdl=new T.Mesh(new T.BoxGeometry(.045,.012,.02),cer);hdl.position.set(.078,.05,0);D.add(hdl);
   const paper=new T.Mesh(lath([[.019,.006],[.062,.08],[.066,.093]],40),new T.MeshStandardMaterial({color:0xf3eee4,roughness:.95,side:T.DoubleSide}));D.add(paper);
   G.traverse(o=>{if(o.isMesh)o.castShadow=true});return G}
-function kettle(){const st=new T.MeshStandardMaterial({color:0xd8dbe0,metalness:1,roughness:.16}),blk=new T.MeshStandardMaterial({color:0x111111,roughness:.5});const G=new T.Group();
+function kettle(){const st=new T.MeshStandardMaterial({color:0xd8dbe0,metalness:1,roughness:.16}),blk=new T.MeshStandardMaterial({color:0x111111,roughness:.5});
+  if(GLB.gooseneck)return fromGlb(GLB.gooseneck,{Baja:st,Hitam:blk});
+  const G=new T.Group();
   G.add(new T.Mesh(lath([[.001,0],[.075,0],[.08,.008],[.082,.07],[.07,.12],[.04,.14],[.001,.14]],48),st));
   const lid=new T.Mesh(new T.SphereGeometry(.012,16,10),blk);lid.position.y=.147;G.add(lid);
   G.add(new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3([V(.07,.02,0),V(.13,.05,0),V(.15,.12,0),V(.17,.17,0),V(.215,.175,0)]),40,.0075,10),st));
