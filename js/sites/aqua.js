@@ -1,4 +1,4 @@
-/* Data situs AQUARIA (fiktif). Ganti isi file ini untuk membuat toko lain; template ada di js/site/shop.js */
+/* Data situs AQUARIA (fiktif). Dipakai oleh js/world/aqua.js (situs di dalam adegan 3D). */
 export default {
  id:'aqua',type:'shop',frames:7,
  fonts:'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=DM+Sans:wght@400;500;700&display=swap',

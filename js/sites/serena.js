@@ -1,10 +1,10 @@
-/* Data situs SERENA (fiktif) — resor tropis. Template: js/site/compro.js */
+/* Data situs SERENA (fiktif) — resor tropis. Dipakai oleh js/world/serena.js (situs di dalam adegan 3D). */
 export default {
  id:'serena',type:'compro',frames:9,
  fonts:'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;700&family=Jost:wght@400;500&display=swap',
  theme:{mode:'light',bg:'#fbf5ea',bg2:'#f2e8d6',ink:'#2a2118',mut:'#6b5d4c',acc:'#c8742a',accInk:'#ffffff',line:'#e0d2b8',card:'#fffaf0',fh:"'Cormorant Garamond',Georgia,serif",fb:"'Jost',system-ui,sans-serif",radius:'4px'},
  brand:{name:'SERENA',mark:'S',tagline:'Resor pulau kecil dengan dua puluh empat vila di atas laut yang tenang.',email:'reservasi@serena.example',phone:'(0361) 555-0177',address:'Pulau Serena, Kepulauan Karimun, Kepulauan Riau'},
- svcTitle:'Kamar & pengalaman',svcSub:'Dari vila di atas air hingga makan malam di dermaga.',projTitle:'Kamar & vila',projSub:'Pilih vila yang paling sesuai untuk liburan Anda.',projLabel:'Vila',
+ svcTitle:'Kamar & pengalaman',svcSub:'Dari vila di atas air hingga makan malam di dermaga.',projTitle:'Kamar & vila',projSub:'Pilih vila yang paling sesuai untuk liburan Anda.',projLabel:'Vila',projClientLabel:'Tipe',projLabels:['Untuk siapa','Rancangan'],projCta:['/pesan?pilih={id}','Pesan vila ini'],projNote:'Harga contoh untuk dua tamu, belum termasuk pajak. Semua data fiktif.',
  home:{eyebrow:'Resor pulau · Kepulauan Riau',title:'Pulau kecil, <em>ketenangan</em> yang besar.',sub:'Dua puluh empat vila, satu teluk berair jernih, dan matahari terbenam yang tak perlu diburu.',cta:'Lihat kamar',heroImg:0,
   stats:[['24','','vila di atas air'],['4.8','/5','nilai tamu'],['12','','pemandu pulau'],['15','','tahun hospitality']],
   intro:{img:3,tag:'Tentang SERENA',title:'Dari udara, sebuah pulau. Dari dekat, sebuah rumah.',text:'Kami membangun SERENA dengan bahan lokal dan listrik surya. Lihat pulau dari ketinggian 90 meter di pengalaman 3D kami, turun ke garis pantai, lalu masuk ke vila dan pilih suasana siang atau malam.'},

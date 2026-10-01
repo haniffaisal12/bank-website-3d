@@ -1,8 +1,8 @@
 /* KAWAH KOPI — situs e-commerce yang hidup di dalam adegan 3D konsepnya.
    Kawah = beranda, kebun = cerita, roastery = proses & kontak, ruang sangrai, meja seduh, rak toko, pajangan produk 360°, kasir.
    Produk dimodelkan prosedural (kemasan berlabel, dripper, ketel, gelas, kotak langganan) dan dipakai di rak, di pajangan, dan sebagai gambar katalog. */
-import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
-import {T,V,Box,RBox,Cyl,mesh,canvas,ctex,glow,clamp,sstep,rng,renderer} from '../core.js';
+import {T,V,Box,RBox,Cyl,mesh,canvas,ctex,clamp,sstep} from '../core.js';
+import {lath,speckle,shelf,pedestal,counter,wireShop} from './kit.js';
 import {world} from './world.js';
 import * as shop from './shop.js';
 import {cart} from '../site/store.js';
@@ -14,7 +14,6 @@ import {concept} from '../concepts/kopi.js';
 const ROASTC={Light:['#c89a5e','#f6e3c4'],Medium:['#8a5432','#f1d2b4'],Dark:['#3a2216','#e7c9ad']};
 const NOTES={Light:'Floral · jeruk · teh hitam',Medium:'Cokelat · karamel · kacang',Dark:'Kakao · asap · pahit manis'};
 const texCache={};
-function speckle(g,w,h,a,seed){const r=rng(seed);for(let i=0;i<w*h/90;i++){g.fillStyle='rgba('+(r()<.5?'40,25,10':'255,240,220')+','+(r()*a)+')';g.fillRect(r()*w,r()*h,1+r()*2,1+r()*2)}}
 function volcano(g,x,y,s,lava){g.fillStyle='#1b100b';g.beginPath();g.moveTo(x-s,y+s*.55);g.lineTo(x-s*.22,y-s*.35);g.lineTo(x+s*.22,y-s*.35);g.lineTo(x+s,y+s*.55);g.closePath();g.fill();
   g.fillStyle=lava;g.beginPath();g.ellipse(x,y-s*.36,s*.22,s*.06,0,0,7);g.fill();g.strokeStyle=lava;g.lineWidth=s*.05;g.beginPath();g.moveTo(x-s*.05,y-s*.33);g.quadraticCurveTo(x-s*.18,y,x-s*.3,y+s*.4);g.stroke()}
 function bagLabel(pid,vr){const key=pid+JSON.stringify(vr);if(texCache[key])return texCache[key];
@@ -47,7 +46,6 @@ function bag(pid,vr){BAGG=BAGG||bagGeo();const lava=pid==='blend-lava';const bas
   const seal=new T.Mesh(new T.BoxGeometry(.163,.022,.008),new T.MeshStandardMaterial({color:lava?0x0c0b0a:0x9c744a,roughness:.8}));seal.position.y=.235;G.add(seal);
   const valve=new T.Mesh(new T.CylinderGeometry(.009,.009,.004,16),new T.MeshStandardMaterial({color:lava?0x2a2a2a:0xe8dcc8,roughness:.4}));valve.rotation.x=Math.PI/2;valve.position.set(.045,.19,.035);G.add(valve);
   const s=vr&&vr.Berat==='1 kg'?1.42:vr&&vr.Berat==='500 g'?1.2:1;G.scale.setScalar(s);return G}
-const lath=(pts,seg)=>new T.LatheGeometry(pts.map(q=>new T.Vector2(q[0],q[1])),seg||40);
 function v60(vr){const col={'Hitam arang':0x1d1b1a,'Putih':0xeeeae4,'Terakota':0xb3603a}[(vr&&vr.Warna)||'Hitam arang'];const cer=new T.MeshPhysicalMaterial({color:col,roughness:.28,clearcoat:.6,side:T.DoubleSide});
   const G=new T.Group();const glass=new T.MeshPhysicalMaterial({color:0xffffff,roughness:.04,transparent:true,opacity:.16,clearcoat:1,side:T.DoubleSide,depthWrite:false});
   const srv=new T.Mesh(lath([[.001,0],[.05,0],[.058,.02],[.06,.07],[.05,.105],[.044,.115]],40),glass);G.add(srv);
@@ -74,16 +72,6 @@ function subBox(vr){const kraft=new T.MeshStandardMaterial({color:0xc39a68,rough
   const m1=bag('biji-kawah',{Sangrai:'Light'});m1.scale.setScalar(.55);m1.position.set(-.05,.1,-.03);m1.rotation.x=-.25;G.add(m1);return G}
 function model(pid,vr){if(pid==='biji-kawah'||pid==='blend-lava')return bag(pid,vr);if(pid==='v60-set')return v60(vr);if(pid==='gooseneck')return kettle();if(pid==='gelas-seduh')return cups();if(pid==='langganan-bulanan')return subBox(vr);return bag('biji-kawah',vr)}
 
-/* ---------- gambar katalog = render model (renderer kecil terpisah) ---------- */
-let TR=null,TS=null,TC=null;const thumbCache={};
-function thumb(pid,vr){const key=pid+JSON.stringify(vr||{});if(thumbCache[key])return thumbCache[key];
-  try{if(!TR){TR=new T.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});TR.setSize(320,320,false);TR.toneMapping=T.ACESFilmicToneMapping;TR.toneMappingExposure=1.05;TR.outputColorSpace=T.SRGBColorSpace;
-      TS=new T.Scene();const pm=new T.PMREMGenerator(TR);TS.environment=pm.fromScene(new RoomEnvironment(),.04).texture;TS.environmentIntensity=.75;
-      const k=new T.DirectionalLight(0xffe2c0,2.2);k.position.set(1.2,2,2);TS.add(k);const r=new T.DirectionalLight(0xff9a3a,1.4);r.position.set(-2,1,-1.5);TS.add(r);TC=new T.PerspectiveCamera(26,1,.01,20)}
-    const m=model(pid,vr);m.rotation.y=-.45;TS.add(m);const bb=new T.Box3().setFromObject(m),c=bb.getCenter(V(0,0,0)),sz=bb.getSize(V(0,0,0)),r=Math.max(sz.x,sz.y,sz.z);
-    TC.position.set(c.x+r*.55,c.y+r*.55,c.z+r*2.3);TC.lookAt(c);TR.render(TS,TC);const url=TR.domElement.toDataURL('image/png');TS.remove(m);return thumbCache[key]=url}
-  catch(e){return 'data:image/gif;base64,R0lGODlhAQABAAAAACw='}}
-
 /* ---------- stasiun kamera (koordinat dunia; roastery di z = -70) ---------- */
 const IN=(x,y,z)=>[x,y,z-70];
 const stations={
@@ -98,34 +86,20 @@ const stations={
 const tour=['kawah','kebun','roastery','sangrai','seduh','toko'];
 
 /* ---------- perabot toko: rak, pajangan berputar, kasir ---------- */
-const shelfItems=[['langganan-bulanan',{Frekuensi:'Tiap 2 minggu'},0,3.1],['gelas-seduh',null,0,4.2],['langganan-bulanan',{Frekuensi:'Tiap bulan'},0,5.4],['gelas-seduh',null,0,6.6],
-  ['biji-kawah',{Sangrai:'Light',Berat:'200 g'},1,3.0],['biji-kawah',{Sangrai:'Light',Berat:'200 g'},1,3.35],['biji-kawah',{Sangrai:'Medium',Berat:'200 g'},1,4.3],['biji-kawah',{Sangrai:'Medium',Berat:'500 g'},1,4.75],['biji-kawah',{Sangrai:'Dark',Berat:'200 g'},1,5.7],['biji-kawah',{Sangrai:'Dark',Berat:'200 g'},1,6.05],['blend-lava',{Berat:'200 g'},1,6.8],
-  ['v60-set',{Warna:'Hitam arang'},2,3.0],['v60-set',{Warna:'Terakota'},2,3.6],['gooseneck',null,2,4.6],['blend-lava',{Berat:'500 g'},2,5.8],['blend-lava',{Berat:'200 g'},2,6.3],['v60-set',{Warna:'Putih'},2,6.9]];
-function setup(rt,W){const w=rt.world,B=w.B,sc=rt.scene,tm=w.timber,shelfObjs={},counterObjs=[],padObjs=[];
-  // rak di dinding kanan depan
-  const SX=w.W/2-.5,Y0=[.92,1.52,2.12];
-  Y0.forEach(y=>{Box(.5,.05,4.6,tm,SX,y,4.9,B)});[2.6,4.9,7.2].forEach(z=>{Box(.5,2.4,.06,tm,SX,1.3,z,B)});Box(.06,2.4,4.6,tm,SX+.24,1.3,4.9,B);
-  shelfItems.forEach(([pid,vr,row,z])=>{const m=model(pid,vr||shop.defVar(shop.P(site,pid)));m.scale.multiplyScalar(1.35);m.rotation.y=-Math.PI/2+(Math.sin(z*7)*.18);m.position.set(SX-.02,Y0[row]+.025,z);B.add(m);(shelfObjs[pid]=shelfObjs[pid]||[]).push(m)});
+const shelfItems=[['langganan-bulanan',{Frekuensi:'Tiap 2 minggu'},0,-1.8],['gelas-seduh',null,0,-.7],['langganan-bulanan',{Frekuensi:'Tiap bulan'},0,.5],['gelas-seduh',null,0,1.7],
+  ['biji-kawah',{Sangrai:'Light',Berat:'200 g'},1,-1.9],['biji-kawah',{Sangrai:'Light',Berat:'200 g'},1,-1.55],['biji-kawah',{Sangrai:'Medium',Berat:'200 g'},1,-.6],['biji-kawah',{Sangrai:'Medium',Berat:'500 g'},1,-.15],['biji-kawah',{Sangrai:'Dark',Berat:'200 g'},1,.8],['biji-kawah',{Sangrai:'Dark',Berat:'200 g'},1,1.15],['blend-lava',{Berat:'200 g'},1,1.9],
+  ['v60-set',{Warna:'Hitam arang'},2,-1.9],['v60-set',{Warna:'Terakota'},2,-1.3],['gooseneck',null,2,-.3],['blend-lava',{Berat:'500 g'},2,.9],['blend-lava',{Berat:'200 g'},2,1.4],['v60-set',{Warna:'Putih'},2,2.0]];
+function setup(rt,W){const w=rt.world,B=w.B,tm=w.timber;
+  const SX=w.W/2-.5;
+  const sh=shelf(B,{pos:[SX,0,4.9],rotY:-Math.PI/2,len:4.6,mat:tm,items:shelfItems,model,site,scale:1.35,at:['toko'],q:vr=>vr&&vr.Sangrai?'?Sangrai='+vr.Sangrai:''});
   const spot=new T.SpotLight(0xffd2a0,60,9,.75,.6,2);spot.position.set(3.4,4.2,4.9);spot.target.position.set(SX,1.4,4.9);B.add(spot,spot.target);
   const fill=new T.PointLight(0xffb870,10,6,2);fill.position.set(4.5,2.8,4.9);B.add(fill);
-  // pajangan: alas batu + kayu, lampu sorot, meja putar
-  const PX=1,PZ=-5.6;Cyl(.4,.46,.12,w.stoneM,PX,.06,PZ,B,48);Cyl(.32,.36,.88,tm,PX,.56,PZ,B,48);Cyl(.35,.35,.03,w.stoneM,PX,1.0,PZ,B,48);
-  const ring=new T.Mesh(new T.TorusGeometry(.355,.008,8,64),new T.MeshBasicMaterial({color:new T.Color(2.6,1.3,.4),toneMapped:false}));ring.rotation.x=Math.PI/2;ring.position.set(PX,1.016,PZ);B.add(ring);
-  const ps=new T.SpotLight(0xfff0dc,22,5,.45,.5,2);ps.position.set(PX+.6,3.2,PZ+1.2);ps.target.position.set(PX,1.05,PZ);ps.castShadow=true;ps.shadow.mapSize.set(1024,1024);B.add(ps,ps.target);
+  const PX=1,PZ=-5.6,ped=pedestal(B,{pos:[PX,0,PZ],mat:tm,baseMat:w.stoneM,model,scale:1.7});
   const pr=new T.PointLight(0xff9a3a,4,3,2);pr.position.set(PX-.8,1.6,PZ-.9);B.add(pr);
-  const turn=new T.Group();turn.position.set(PX,1.016,PZ);B.add(turn);let shown=null;
-  W.showProduct=(pid,vr)=>{if(shown)turn.remove(shown);shown=model(pid,vr);shown.scale.multiplyScalar(1.7);turn.add(shown);turn.updateWorldMatrix(true,true);padObjs.length=0;padObjs.push(shown);const bb=new T.Box3().setFromObject(shown);return [PX,(bb.min.y+bb.max.y)/2+w.by,PZ-70]};
-  W.onVariant=(pid,vr)=>{const t=W.showProduct(pid,vr);W.kick(.6)};
-  // kasir: meja, mesin kasir, keranjang anyaman berisi barang belanjaan
-  const KX=-5.6,KZ=4.6;RBox(1.1,1.05,2.6,.04,tm,KX,.55,KZ,B);Box(1.2,.05,2.7,w.stoneM,KX,1.1,KZ,B);
-  const reg=RBox(.34,.12,.3,.03,new T.MeshStandardMaterial({color:0x1f1c1a,roughness:.4,metalness:.4}),KX+.1,1.19,KZ-.7,B);const scr=new T.Mesh(new T.PlaneGeometry(.26,.16),new T.MeshBasicMaterial({color:new T.Color(1.6,.9,.4),toneMapped:false}));scr.position.set(KX+.24,1.38,KZ-.7);scr.rotation.y=Math.PI/2;scr.rotation.x=0;B.add(scr);
-  const bsk=new T.Mesh(new T.CylinderGeometry(.32,.26,.2,28,1,true),new T.MeshStandardMaterial({color:0x8a6236,roughness:.95,side:T.DoubleSide}));bsk.position.set(KX+.05,1.225,KZ+.35);B.add(bsk);Cyl(.26,.26,.01,w.jute,KX+.05,1.13,KZ+.35,B,28);
-  const basket=new T.Group();basket.position.set(KX+.05,1.13,KZ+.35);B.add(basket);counterObjs.push(bsk,reg);
+  const KX=-5.6,KZ=4.6,ct=counter(B,{pos:[KX,0,KZ],mat:tm,topMat:w.stoneM,basketBase:w.jute,model,site});
   const kl=new T.PointLight(0xffb870,14,6,2);kl.position.set(KX+1,2.9,KZ);B.add(kl);
-  [[KX+.2,3.3,KZ]].forEach(q=>{const lm=new T.MeshStandardMaterial({color:0x331a08,emissive:0xffb060,emissiveIntensity:2.4,roughness:.7});mesh(lath([[.02,-.2],[.22,-.12],[.3,.1],[.1,.26]],20),lm,q[0],q[1],q[2],B).castShadow=false;Cyl(.008,.008,1.2,tm,q[0],q[1]+.7,q[2],B,4)});
-  function fillBasket(){basket.clear();const it=cart.items(site.id);let n=0;it.forEach(i=>{for(let k=0;k<i.qty&&n<9;k++,n++){const m=model(i.pid,i.variant||shop.defVar(shop.P(site,i.pid)));m.scale.multiplyScalar(.8);const a=n*2.39,r=n?.08+.05*(n%3):0;m.position.set(Math.cos(a)*r,0,Math.sin(a)*r);m.rotation.y=a;basket.add(m)}})}
-  fillBasket();W.onCartChange=fillBasket;sc.userData.aoDirty=true;
-  // pin
+  {const lm=new T.MeshStandardMaterial({color:0x331a08,emissive:0xffb060,emissiveIntensity:2.4,roughness:.7});mesh(lath([[.02,-.2],[.22,-.12],[.3,.1],[.1,.26]],20),lm,KX+.2,3.3,KZ,B).castShadow=false;Cyl(.008,.008,1.2,tm,KX+.2,4,KZ,B,4)}
+  rt.scene.userData.aoDirty=true;
   const P=(x,y,z)=>[x,y+w.by,z-70];
   W.pins=[
     {pos:[0,6,-28],label:'Kebun kopi',sub:'Cerita petani',href:'#/kebun',at:['kawah']},{pos:[0,9,-70],label:'Roastery',sub:'Sangrai & toko',href:'#/roastery',at:['kawah','kebun']},{pos:[0,76,-175],label:'Kawah',href:'#/',at:['kebun','roastery']},
@@ -133,10 +107,7 @@ function setup(rt,W){const w=rt.world,B=w.B,sc=rt.scene,tm=w.timber,shelfObjs={}
     {pos:P(w.RX,2.9,w.RZ),label:'Mesin sangrai',href:'#/sangrai',at:['seduh','toko','kasir','pajang']},{pos:P(w.CXp,2.0,w.CZ),label:'Meja seduh',href:'#/seduh',at:['sangrai','toko','kasir','pajang']},
     {pos:P(SX,2.6,4.9),label:'Rak toko',sub:'Belanja',href:'#/toko',at:['sangrai','seduh','kasir','pajang']},{pos:P(KX,1.6,KZ),label:'Kasir',sub:'Keranjang',href:'#/keranjang',at:['sangrai','seduh','toko','pajang']},
     {pos:P(PX,1.7,PZ),label:'Pajangan 360°',href:'#/produk/biji-kawah',at:['sangrai','seduh','toko','kasir']},{pos:P(0,2.2,7.6),label:'Keluar',sub:'Pintu & kontak',href:'#/roastery',at:['sangrai','toko','kasir']}];
-  const seen={};shelfItems.forEach(([pid,vr,row,z])=>{if(seen[pid])return;seen[pid]=1;const p=shop.P(site,pid);W.pins.push({pos:P(SX-.1,Y0[row]+.42,z),label:p.name,sub:shop.rp(p.price),kind:'prod',href:'#/produk/'+pid+(vr&&vr.Sangrai?'?Sangrai='+vr.Sangrai:''),at:['toko']})});
-  W.picks=[{objects:()=>Object.values(shelfObjs).flat(),hint:'Klik: lihat produk 360°',when:()=>W.stationId==='toko'||W.stationId==='kasir',on:h=>{let o=h.object;for(const pid in shelfObjs)for(const m of shelfObjs[pid]){let x=o;while(x){if(x===m){location.hash='/produk/'+pid;return}x=x.parent}}}},
-    {objects:()=>counterObjs,hint:'Klik: buka keranjang',on:()=>{location.hash='/keranjang'}}];
-  W.thumb=thumb;
+  wireShop(W,{site,model,shelves:[sh],ped,counter:ct,shelfWhen:()=>W.stationId==='toko'||W.stationId==='kasir'});
 }
 
 /* ---------- panel cerita ---------- */
@@ -166,11 +137,11 @@ const def={site,concept,stations,tour,audio:true,
   setup,
   route(r,W){const a=r.seg[0];
     if(!a)return home(W);if(a==='kebun')return kebun();if(a==='roastery')return roastery();if(a==='sangrai')return sangrai(W);if(a==='seduh')return seduh(W);
-    if(a==='toko')return Object.assign(shop.catalog(site,W,r),{st:'toko'});
+    if(a==='toko')return Object.assign(shop.catalog(site,W,r,{title:'Rak roastery'}),{st:'toko'});
     if(a==='produk'){const o=shop.product(site,W,r.seg[1],r.q);if(!o)return null;let tg=[1,1.12,-75.6];if(W.showProduct)tg=W.showProduct(W.sel.pid,W.sel.vr);return Object.assign(o,{st:'pajang',kind:'product',orbit:{target:tg,az:0,el:.16,d:.95,dmin:.45,dmax:1.8}})}
     if(a==='keranjang')return Object.assign(shop.cartPanel(site,W),{st:'kasir'});if(a==='checkout')return Object.assign(shop.checkout(site,W),{st:'kasir'});
     if(a==='pesanan')return Object.assign(shop.order(site,W,decodeURIComponent(r.seg[1]||'')),{st:'kasir'});if(a==='lacak')return Object.assign(shop.track(site,W,r),{st:'kasir'});
-    if(a==='kontak'||a==='faq')return Object.assign(shop.contact(site,W),{st:'roastery'});return null},
+    if(a==='kontak'||a==='faq')return Object.assign(shop.contact(site,W,'Pintu roastery'),{st:'roastery'});return null},
   act(t,e,W){const a=t.dataset.act;
     if(a==='lava'){W.lava=!W.lava;W.rt&&W.rt.actions.lava(W.lava);t.setAttribute('aria-pressed',W.lava);t.querySelector('b').textContent=W.lava?'Aktif':'Tenang';W.sfx(W.lava?'rumble':'off');W.kick(W.lava?2:.5)}
     else if(a==='roast'){W.rt&&W.rt.actions.roast(+t.dataset.i);W.sfx('sizzle');W.render()}

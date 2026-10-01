@@ -146,3 +146,6 @@ export const concept={id:'flora',hdris:[],name:'FLORA',type:'E-commerce',acc:'#9
   {tag:'Bab 3 · Pintu',title:'Papan nama, lalu udara yang lembap',text:'Kamera melewati ambang pintu. Cahaya menyebar lewat kaca dan debu halus melayang di udara.',cam:[0,2.5,19],look:[0,2.5,0]},
   {tag:'Bab 4 · Bedeng',title:'Siram, lalu lihat kebun bereaksi',text:'Air turun dari pipa atas, daun mengembang, bunga mekar. Nyalakan lampu tumbuh untuk suasana lain.',cam:[0,1.9,9],look:[0,2.4,-12],ui:[AC('water','Siram'),TG('uv','Lampu tumbuh',['Mati','Nyala']),AC('cart','Tambah tanaman'),ST('grow','Tinggi rata-rata','30 cm'),ST('cart','Keranjang','0 item')]}
  ]};
+
+/* dipakai ulang oleh situs 3D (js/world/flora.js) */
+export {plantGeo,potGeo,flowerGeo};

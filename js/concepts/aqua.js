@@ -178,3 +178,6 @@ export const concept={id:'aqua',hdris:[],name:'AQUARIA',type:'E-commerce',acc:'#
   {tag:'Bab 3 · Menyelam',title:'Permukaan air pecah',text:'Kamera menembus permukaan. Langit oranye berubah menjadi biru pekat dan kabut menebal, tanpa cut.',cam:[0,-1.6,-2.5],look:[0,-9,-17]},
   {tag:'Bab 4 · Etalase',title:'Toko yang berenang',text:'Produk melayang di antara karang. Beri makan ikan, ganti spesies, lalu masukkan yang Anda suka ke keranjang.',cam:[0,-9,-8.5],look:[0,-10.5,-28],ui:[AC('feed','Beri makan'),CY('species','Spesies',['Tropis','Laut dalam','Koi']),AC('cart','Tambah ke keranjang'),ST('fed','Ikan kenyang','0 ekor kenyang'),ST('voucher','Voucher','terkunci'),ST('cart','Keranjang','0 item')]}
  ]};
+
+/* dipakai ulang oleh situs 3D (js/world/aqua.js) untuk model produk */
+export {fishBodyGeo,finGeo,fishTex,branchCoral,reefRock,FISH_PAT,withCaustics};

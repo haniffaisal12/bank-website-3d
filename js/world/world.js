@@ -26,7 +26,13 @@ export async function world(def){
   let ox=0,oxSet=-1,oy=0,oySet=-1;
   const INSTANT=/[?&]instant=1/.test(location.search);
   const SMALL=matchMedia('(max-width:820px)').matches||matchMedia('(pointer:coarse)').matches,MOB=matchMedia('(max-width:720px)').matches;
-  document.documentElement.style.setProperty('--acc',site.theme.acc);
+  /* tema dari data situs: warna panel kaca, tinta, aksen, huruf */
+  {const t=site.theme,r=document.documentElement.style,light=def.panelLight;const hx=c=>{const n=parseInt(c.slice(1),16);return[(n>>16)&255,(n>>8)&255,n&255].join(',')};
+    const m={'--acc':t.acc,'--accInk':t.accInk||'#000','--fh':t.fh,'--fb':t.fb,'--wbg':t.bg,
+      '--wink':light?t.ink:(t.mode==='light'?'#f6f1ea':t.ink),'--wmut':light?t.mut:(t.mode==='light'?'#cfc4b6':t.mut),
+      '--wglass':light?'rgba(255,252,246,.82)':'rgba('+hx(t.mode==='light'?'#1c1712':t.bg)+',.64)','--wline':light?'rgba(40,30,20,.14)':'rgba(255,255,255,.14)'};
+    for(const k in m)if(m[k])r.setProperty(k,m[k]);if(light)document.documentElement.classList.add('wlight');
+    if(site.fonts&&!document.querySelector('link[data-wf]')){const l=document.createElement('link');l.rel='stylesheet';l.href=site.fonts;l.dataset.wf=1;document.head.appendChild(l)}}
   /* ---------- DOM ---------- */
   const nav=def.nav;
   document.body.insertAdjacentHTML('beforeend',
@@ -34,14 +40,14 @@ export async function world(def){
   +'<header class="wbar"><a class="wlogo" href="#/" aria-label="'+esc(site.brand.name)+' — beranda"><span>'+esc(site.brand.mark)+'</span>'+esc(site.brand.name)+'</a>'
   +'<nav class="wnav" id="wnav" aria-label="Menu utama">'+nav.map(n=>'<a href="#'+n[1]+'" data-r="'+n[1]+'">'+esc(n[0])+'</a>').join('')+'<a class="wback" href="'+ROOT+'index.html">← Bank inspirasi</a></nav>'
   +'<div class="wact"><button class="wic" id="wSnd" aria-pressed="false" title="Suara"></button><button class="wic" id="wQ" title="Kualitas grafis"></button>'
-  +'<a class="wic wcart" href="#/keranjang" aria-label="Keranjang"><svg viewBox="0 0 24 24"><path d="M3 4h2.5l2.2 11h10.6L20.5 7H6.2"/><circle cx="9" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/></svg><b id="wBadge" hidden>0</b></a>'
+  +(site.type!=='shop'?'':'<a class="wic wcart" href="#/keranjang" aria-label="Keranjang"><svg viewBox="0 0 24 24"><path d="M3 4h2.5l2.2 11h10.6L20.5 7H6.2"/><circle cx="9" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/></svg><b id="wBadge" hidden>0</b></a>')
   +'<button class="wic wburg" id="wBurg" aria-label="Menu" aria-expanded="false" aria-controls="wnav"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div></header>'
   +'<div id="wpins" aria-label="Titik di adegan"></div>'
   +'<aside id="wp" aria-live="polite"><div class="wp-h"><button class="wp-tog" id="wpTog" aria-expanded="true" aria-controls="wpBody"><i></i><span id="wpTitle"></span></button></div><div class="wp-b" id="wpBody" tabindex="-1"></div></aside>'
   +'<div id="wloc"><b id="wlocN"></b><span id="wlocH">Seret untuk melihat sekeliling 360°</span><span class="wtour"><button id="wPrev" aria-label="Stasiun sebelumnya">‹</button><button id="wNext" aria-label="Stasiun berikutnya">›</button></span></div>'
   +'<div id="wtip" hidden></div>');
   const wp=$('#wp'),wpBody=$('#wpBody'),pinsEl=$('#wpins'),tip=$('#wtip');
-  const badge=()=>{const n=cart.count(site.id),b=$('#wBadge');b.textContent=n;b.hidden=!n};badge();
+  const badge=()=>{const b=$('#wBadge');if(!b)return;const n=cart.count(site.id);b.textContent=n;b.hidden=!n};badge();
   $('#wBurg').onclick=e=>{const o=$('#wnav').classList.toggle('open');e.currentTarget.setAttribute('aria-expanded',o)};
   let collapsed=false;function setCollapsed(v){collapsed=v;wp.classList.toggle('min',v);$('#wpTog').setAttribute('aria-expanded',!v)}
   $('#wpTog').onclick=()=>{setCollapsed(!collapsed);SND.sfx(collapsed?'off':'on')};
@@ -52,7 +58,7 @@ export async function world(def){
   let rt=null;
   if(renderer){try{rt=def.concept.build(fakeUI)}catch(e){console.error(e)}}
   W.rt=rt;if(rt&&def.setup)def.setup(rt,W);
-  if(!rt)document.body.classList.add('nogl');
+  if(!rt){document.body.classList.add('nogl');document.body.style.backgroundImage='url('+ROOT+'assets/img/'+site.id+'/'+(def.noglImg||'04')+'.jpg)'}
 
   /* ---------- kamera: stasiun, terbang, lihat 360°, orbit produk ---------- */
   for(const id in S){const s=S[id];s.id=id;s.p=V(...s.pos);s.l=V(...s.look)}
@@ -75,13 +81,14 @@ export async function world(def){
     // sisa sudut pandang 360° dibawa ke awal penerbangan lalu dilepas pelan
     yaw=0;pitch=0;cur=s;SND.sfx('whoosh',1);kick=Math.max(kick,1.6)}
   W.flyTo=flyTo;
-  W.setOrbit=function(o){if(!o){orb.on=false;return}orb.on=true;orb.t.set(...o.target);orb.az=o.az||0;orb.el=o.el==null?.18:o.el;orb.d=o.d||1.5;orb.dmin=o.dmin||.6;orb.dmax=o.dmax||2.4;orb.vaz=0;orb.vel=0};
+  W.setOrbitTarget=t=>{orb.t.set(...t)};
+  W.setOrbit=function(o){if(!o){orb.on=false;if(INSTANT)orb.k=0;return}orb.on=true;orb.t.set(...o.target);orb.az=o.az||0;orb.el=o.el==null?.18:o.el;orb.d=o.d||1.5;orb.dmin=o.dmin||.6;orb.dmax=o.dmax||2.4;orb.vaz=0;orb.vel=0;if(INSTANT)orb.k=1};
 
   /* ---------- masukan: seret, klik, roda, keyboard ---------- */
   const cv=$('#gl');const ray=new T.Raycaster(),pn=new T.Vector2();
   let drag=null,moved=0,hint=true;
   function pick(x,y){pn.set(x/innerWidth*2-1,-(y/innerHeight)*2+1);ray.setFromCamera(pn,camera);
-    const lists=(W.picks||[]).concat(rt&&rt.pick?rt.pick.map(p=>({objects:p.objects,hint:p.hint,on:()=>{if(rt.actions[p.id])rt.actions[p.id](p.id==='roast'?(rt.world.getRoast()+1)%3:undefined);def.onAction&&def.onAction(p.id,W)}})):[]);
+    const lists=(W.picks||[]).concat(rt&&rt.pick?rt.pick.map(p=>({objects:p.objects,hint:p.hint,on:()=>{if(!(def.pickAction&&def.pickAction(p.id,W))&&rt.actions[p.id])rt.actions[p.id](p.id==='roast'?(rt.world.getRoast()+1)%3:undefined);def.onAction&&def.onAction(p.id,W)}})):[]);
     let best=null;for(const pk of lists){if(pk.when&&!pk.when())continue;const objs=(typeof pk.objects==='function'?pk.objects():pk.objects)||[];const h=ray.intersectObjects(objs,true)[0];if(h&&(!best||h.distance<best.h.distance))best={pk,h}}return best}
   cv.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,id:e.pointerId,t:performance.now()};moved=0;cv.setPointerCapture(e.pointerId);unlock()});
   cv.addEventListener('pointermove',e=>{
@@ -188,7 +195,8 @@ export async function world(def){
     else renderer.render(rt.scene,camera);
     if(autoQ&&quality>0){fT+=(raw-fT)*.08;fN++;if(fN>90&&fT>.05){applyQ(quality-1);fN=0;fT=.02}}}
   render();requestAnimationFrame(t=>{last=t;frame(t)});
-  window.__world=W;W.dbg=()=>({st:W.stationId,flying:!!flight,cam:camera.position.toArray().map(v=>+v.toFixed(2)),orb:orb.on});
+  if(/[?&]bare=1/.test(location.search))document.body.classList.add('bare');
+  window.__world=W;W.dbg=()=>({st:W.stationId,flying:!!flight,cam:camera.position.toArray().map(v=>+v.toFixed(2)),dir:camera.getWorldDirection(V(0,0,0)).toArray().map(v=>+v.toFixed(2)),orb:orb.on});
   const ld=$('#loader');if(ld){ld.classList.add('done');setTimeout(()=>ld.remove(),700)}
   window.__worldBoot=1;return W;
 }

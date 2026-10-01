@@ -10,8 +10,8 @@ const rate=p=>p.rating||4.7;
 const th=(W,p,vr,cls)=>'<span class="th '+(cls||'')+'"><img src="'+(W.thumb?W.thumb(p.id,vr||defVar(p)):'')+'" alt="" loading="lazy"></span>';
 const vtxt=v=>v?Object.values(v).join(' · '):'';
 
-export function catalog(s,W,r){const cat=r.q.get('k')||'semua',l=s.products.filter(p=>cat==='semua'||p.cat===cat);
-  return{title:'Toko',html:'<p class="wk">'+esc(s.brand.name)+' · Toko</p><h1 class="wh">Rak roastery</h1><p class="wl">Klik produk di rak, atau pilih di bawah. Setiap produk bisa diputar 360°.</p>'
+export function catalog(s,W,r,o){o=o||{};const cat=r.q.get('k')||'semua',l=s.products.filter(p=>cat==='semua'||p.cat===cat);
+  return{title:'Toko',html:'<p class="wk">'+esc(s.brand.name)+' · Toko</p><h1 class="wh">'+esc(o.title||'Rak toko')+'</h1><p class="wl">'+esc(o.sub||'Klik produk di rak, atau pilih di bawah. Setiap produk bisa diputar 360°.')+'</p>'
   +'<div class="wchips">'+['semua'].concat(s.categories.map(c=>c.id)).map(c=>'<a class="wchip'+(c===cat?' on':'')+'" href="#/toko'+(c==='semua'?'':'?k='+c)+'">'+(c==='semua'?'Semua':esc(s.categories.find(x=>x.id===c).name))+'</a>').join('')+'</div>'
   +'<div class="wgrid">'+l.map(p=>'<article class="wpc rv"><a href="#/produk/'+p.id+'">'+th(W,p)+(p.badge?'<em>'+esc(p.badge)+'</em>':'')+'</a><div><h3><a href="#/produk/'+p.id+'">'+esc(p.name)+'</a></h3><p>'+esc(p.short)+'</p><div class="wpf"><b>'+rp(p.price)+'</b><button class="wq" data-act="quick" data-pid="'+p.id+'" aria-label="Tambah '+esc(p.name)+' ke keranjang">+</button></div></div></article>').join('')+'</div>'}}
 
@@ -65,8 +65,8 @@ export function track(s,W,r){const no=r.q.get('no')||'';let res='';if(no){const 
   return{title:'Lacak pesanan',html:'<p class="wk">Kasir</p><h1 class="wh">Lacak pesanan</h1><form class="wcpn" id="trF"><input name="no" required placeholder="Nomor pesanan" aria-label="Nomor pesanan" value="'+esc(no)+'"><button class="wbtn sm">Lacak</button></form>'+res
   +(mine.length?'<h3>Pesanan di perangkat ini</h3>'+mine.map(o=>'<a class="wol" href="#/pesanan/'+o.no+'"><b>'+esc(o.no)+'</b><span>'+fmtDate(o.at)+' · '+rp(o.total)+'</span></a>').join(''):''),
   after:root=>{$('#trF',root).onsubmit=e=>{e.preventDefault();const v=e.target.no.value.trim();if(v)location.hash='/lacak?no='+encodeURIComponent(v)}}}}
-export function contact(s,W){const c=s.contact||{};
-  return{title:'Kontak',html:'<p class="wk">Pintu roastery</p><h1 class="wh">Hubungi kami</h1><p class="wl">'+esc(s.brand.address)+' · '+esc(c.hours||'')+'<br>'+esc(s.brand.phone)+' · '+esc(s.brand.email)+'</p>'
+export function contact(s,W,where){const c=s.contact||{};
+  return{title:'Kontak',html:'<p class="wk">'+esc(where||'Kontak')+'</p><h1 class="wh">Hubungi kami</h1><p class="wl">'+esc(s.brand.address)+' · '+esc(c.hours||'')+'<br>'+esc(s.brand.phone)+' · '+esc(s.brand.email)+'</p>'
   +'<form class="wform" id="cForm" novalidate><div class="fld"><label for="cn">Nama</label><input id="cn" name="nama" required autocomplete="name"></div><div class="fld"><label for="ce">Email</label><input id="ce" name="email" type="email" required autocomplete="email"></div>'
   +(c.topics?'<div class="fld"><label for="ct">Topik</label><select id="ct" name="topik">'+c.topics.map(t=>'<option>'+esc(t)+'</option>').join('')+'</select></div>':'')
   +'<div class="fld"><label for="cm">Pesan</label><textarea id="cm" name="pesan" rows="4" required data-min="10"></textarea></div><button class="wbtn full" id="cSend">Kirim pesan</button><p class="wtiny">Pesan disimpan di peramban ini saja (simulasi).</p></form>'

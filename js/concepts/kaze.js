@@ -113,7 +113,7 @@ function buildKaze(ui){
   applyPal();let lastL=0;
   function applyWay(){ped.forEach((s,i)=>{const c=ways[(wi+i)%4],m=s.userData.m;m.mU.color.setHex(c[0]);m.mA.color.setHex(c[1]);m.mS.color.setHex(c[2])});ui.stat('way',ways[(wi+1)%4][3])}
   setTimeout(()=>ui.stat('way',ways[1][3]),0);
-  return{scene,pick:[{objects:()=>ped,id:'way',hint:'Klik: ganti colorway'}],look:{exp:1,bloom:[.38,.75,1.05],vig:.42,grain:.025,tint:[1,.98,1.04],sat:1.1},
+  return{scene,world:{ped,ways,shelfM},pick:[{objects:()=>ped,id:'way',hint:'Klik: ganti colorway'}],look:{exp:1,bloom:[.38,.75,1.05],vig:.42,grain:.025,tint:[1,.98,1.04],sat:1.1},
     setQ(q){street.setHigh(q>=1);sfl.setHigh(q>=1)},
     update(t,dt,cam){
       street.tick(t);sfl.tick(t);
@@ -136,3 +136,6 @@ export const concept={id:'kaze',hdris:["city"],name:'KAZE 風',type:'E-commerce'
   {tag:'Bab 3 · Etalase',title:'Mendekat ke papan nama toko',text:'Kamera berhenti sebentar di depan kaca, cukup dekat untuk membaca papan dan melihat pedestal dari luar.',cam:[0,1.8,3],look:[0,2.3,-14]},
   {tag:'Bab 4 · Di dalam',title:'Tiga pedestal, satu keputusan',text:'Rak dinding penuh, layar LED berjalan. Pilih colorway, percepat putaran, atau langsung ambil satu.',cam:[0,1.8,-9.6],look:[0,1.4,-17],ui:[AC('way','Ganti colorway'),TG('spin','Putaran',['Santai','Cepat']),AC('cart','Tambah ke keranjang'),ST('way','Colorway','Midnight'),ST('cart','Keranjang','0 item')]}
  ]};
+
+/* dipakai ulang oleh situs 3D (js/world/kaze.js) */
+export {buildShoe};

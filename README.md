@@ -1,63 +1,39 @@
 # Bank Website 3D
 
-Bank inspirasi website 3D sinematik untuk **company profile** dan **e-commerce**. Setiap konsep punya halamannya sendiri: kamera bergerak dari luar hingga masuk ke interior, dikendalikan oleh snap-scroll, dengan tombol melayang yang mengubah adegan.
+Bank inspirasi website 3D untuk **company profile** dan **e-commerce**. Setiap konsep adalah **situs sungguhan yang hidup di dalam adegan 3D-nya sendiri**:
+halaman menjadi tempat, kamera terbang dari satu tempat ke tempat lain, pengunjung bisa melihat sekeliling 360°, dan produk (atau vila, inti hologram, segmen DNA) bisa dikitari 360°.
 
-## Konsep
+## Sembilan situs
 
-| Halaman | Jenis | Ringkasan |
+| Halaman | Jenis | Tempat di adegan |
 |---|---|---|
-| `concepts/nexus.html` | Company profile | Menara kaca ke server room dengan hologram |
-| `concepts/aqua.html` | E-commerce | Gerbang dermaga ke bawah air, beri makan ikan |
-| `concepts/serena.html` | Company profile | Resort tropis dari bird-eye ke kamar, siang/malam |
-| `concepts/flora.html` | E-commerce | Rumah kaca botani, siram dan lampu tumbuh |
-| `concepts/kaze.html` | E-commerce | Gang neon berhujan ke butik sneaker |
-| `concepts/celeste.html` | E-commerce / profil | Observatorium gunung, teleskop dan planet |
-| `concepts/volt.html` | E-commerce | Showroom SUV listrik dengan konfigurator |
-| `concepts/genom.html` | Company profile | Klinik genomik: menyelam dari sel ke heliks DNA |
-| `concepts/kopi.html` | E-commerce | Kedai kopi vulkanik: kawah, kebun, roastery, seduh |
+| `concepts/kopi.html` | E-commerce · kopi | kawah (beranda), kebun (cerita), ruang sangrai, meja seduh, rak roastery (katalog), pajangan 360°, kasir |
+| `concepts/aqua.html` | E-commerce · akuarium | gerbang dermaga, etalase bawah laut (beri makan ikan, voucher), rak karang, pajangan batu 360°, kios kasir di dermaga |
+| `concepts/flora.html` | E-commerce · tanaman | bukit, jalan setapak, lapak tanaman, bedeng (siram, lampu tumbuh), pajangan 360°, meja kasir |
+| `concepts/kaze.html` | E-commerce · sneaker | gang hujan (palet neon), tiga pedestal (colorway), meja drop, pedestal 360°, kasir |
+| `concepts/celeste.html` | E-commerce · teleskop | puncak, kubah (buka celah, arahkan teleskop, tiket pengamatan), rak teleskop, pajangan 360°, kasir |
+| `concepts/volt.html` | E-commerce · otomotif | plaza, aula konfigurator (cat, velg, lampu), VOLT X1 dikitari 360° di piringan, dinding aksesori, meja konsultan |
+| `concepts/nexus.html` | Company profile · AI | plaza, lobi (tentang), kios layanan, lorong server (proyek), inti hologram 360°, media wall (wawasan), karier, resepsionis |
+| `concepts/serena.html` | Company profile + reservasi · resor | udara, pantai, kolam & spa (pengalaman), vila dikitari 360°, kamar (siang/malam), dek reservasi dengan penanda vila |
+| `concepts/genom.html` | Company profile + janji temu · klinik | sel, membran, inti (layanan), segmen DNA 360°, Golgi (studi), mitokondria (wawasan), jadwal konsultasi |
 
-`index.html` adalah beranda: portal 3D ke semua konsep dan daftar ide yang belum dibangun.
+`index.html` adalah beranda: portal 3D ke semua konsep. Alamat lama `sites/<id>.html` dialihkan ke halaman di atas.
 
-## Studi kasus dan interaksi
+## Cara kerja situs 3D
 
-- **Studi kasus:** slide terakhir tiap konsep (atau tombol *Studi kasus* di kanan atas) berisi klien fiktif, tantangan, pendekatan, keputusan desain
-  (dengan tombol *Lihat di adegan*), target hipotesis, dan stack. Datanya ada di `js/study.js`. Semua klien dan angka fiktif,
-  dan angka hanyalah target, bukan hasil terukur.
-- **Titik panas:** lingkaran berdenyut di dalam adegan. Klik untuk membuka penjelasan keputusan desain di tempat itu.
-- **Klik objek 3D:** ikan, sepatu, mobil, tanaman, hologram, planet, dan lainnya dapat diklik. Kursor berubah dan muncul petunjuk.
-- **Suara:** semua dihasilkan dengan Web Audio (tanpa berkas suara). Ambien berganti per slide, klik dan aksi punya efek sendiri.
-  Browser baru mengizinkan suara setelah klik pertama. Tombol *Suara* di kanan atas mematikannya dan pilihan diingat.
-- **Gerak:** kursor khusus dan riak klik, bilah progres, teks muncul bertahap, dorongan FOV dan getar kamera pada aksi, getar ponsel saat menekan tombol.
-
-## Situs di dalam 3D (pilot: KAWAH KOPI)
-
-`concepts/kopi.html` bukan lagi slide konsep, melainkan **toko sungguhan yang hidup di dalam adegannya**:
-
-- **Setiap halaman adalah tempat.** Beranda = tepi kawah, Cerita = kebun, Proses & Kontak = pintu roastery, Sangrai = ruang sangrai,
-  Seduh = meja seduh, Toko = rak di dinding, Produk = pajangan berputar, Keranjang/Checkout/Lacak = meja kasir.
-  Pindah halaman membuat kamera terbang ke tempat itu; tombol kembali/maju browser dan tautan langsung (`#/produk/v60-set`) tetap bekerja.
-- **Tur 360°:** seret layar untuk melihat sekeliling dari titik mana pun, klik pin untuk pindah tempat, gulir atau tombol ‹ › untuk tur berurutan.
-- **Produk 360°:** di halaman produk kamera mengitari model 3D produknya; seret untuk memutar, gulir/cubit untuk mendekat. Varian (tingkat sangrai, berat, gilingan, warna)
-  langsung mengubah model dan labelnya. Gambar katalog dan keranjang adalah render dari model yang sama.
-- **Dunia ikut berubah:** barang di keranjang muncul di keranjang anyaman di meja kasir; tingkat sangrai mengubah warna biji di baki; tombol Seduh menjalankan ketel.
-- Konten panel adalah DOM biasa (bisa difokus, dibaca pembaca layar, dan diisi formulir). Keranjang, pesanan, kontak tetap simulasi di `localStorage`.
-- Kode: `js/world/world.js` (mesin: stasiun, terbang, 360°, orbit produk, pin, router), `js/world/shop.js` (panel e-commerce), `js/world/kopi.js` (tempat, perabot, model produk, panel cerita), `css/world.css`.
-  Parameter `?instant=1` mematikan animasi terbang (untuk pengujian).
-
-## Situs lengkap (compro dan e-commerce)
-
-Selain pengalaman 3D, tiap konsep punya **situs sungguhan** di `sites/<id>.html` (tombol *Buka situs* di HUD 3D, dan *Jelajah 3D* di situsnya):
-
-| Jenis | Konsep | Halaman |
-|---|---|---|
-| E-commerce | AQUARIA, FLORA, KAZE, CELESTE, VOLT, KAWAH KOPI | beranda, katalog + filter/urut/cari, detail produk (varian, harga dinamis, galeri), keranjang (kupon, ongkir gratis), checkout (validasi, pengiriman, pembayaran), konfirmasi, lacak pesanan, cerita, FAQ, kontak |
-| Company profile | NEXUS·AI, SERENA, HELIX | beranda, tentang, layanan + detail, proyek/studi kasus + detail, wawasan (artikel), karier, FAQ, kontak |
-
-- Router berbasis hash (`#/produk/...`), satu berkas data per situs di `js/sites/<id>.js` (isi, produk, harga, kupon, ongkir), template di `js/site/shop.js` dan `js/site/compro.js`, kerangka di `js/site/app.js`, gaya di `css/shop.css`.
-- **Keranjang menyatu dengan 3D:** tombol *Tambah ke keranjang* di adegan 3D memasukkan produk yang sama ke keranjang situs (`js/site/store.js`).
-- **Semua simulasi:** keranjang, pesanan, dan pesan kontak disimpan di `localStorage` peramban; tidak ada pembayaran atau pengiriman nyata. Merek, klien, harga, dan angka fiktif.
-  Untuk memakai backend sungguhan, ganti isi objek `api` di `js/site/store.js` (bentuk argumen dan hasil sudah sama).
-- **Gambar** situs adalah tangkapan dari adegan 3D (`assets/img/<id>/NN.jpg`). Buat ulang dengan `node tools/capture.js [id ...]` (butuh Playwright dan server lokal di port 8765, atau set `BASE`). Mode `?bare=1` pada halaman konsep menyembunyikan semua UI untuk keperluan ini.
+- **Setiap halaman adalah tempat.** Pindah halaman membuat kamera terbang ke tempatnya (melewati pintu, menyelam, menembus kaca).
+  Router berbasis hash: tombol kembali/maju browser dan tautan langsung (misalnya `concepts/kopi.html#/produk/v60-set`) bekerja.
+- **Tur 360°:** seret layar untuk melihat sekeliling dari tempat mana pun; klik pin untuk pindah; gulir, tombol ‹ ›, atau PageUp/PageDown untuk tur berurutan.
+- **Produk 360°:** di halaman produk kamera mengitari model 3D-nya; seret untuk memutar, gulir atau cubit untuk mendekat. Varian langsung mengubah model
+  (label sangrai dan berat kemasan kopi, warna dripper, ukuran akuarium, colorway sepatu, warna cat dan velg mobil, dan lainnya).
+  Gambar katalog dan keranjang adalah render dari model yang sama.
+- **Dunia ikut berubah:** isi keranjang muncul di keranjang di meja kasir; reservasi menyalakan penanda di atas vila; pilihan layanan menyalakan segmen DNA; konfigurator mengecat mobil.
+- **Halaman lengkap:** e-commerce punya katalog dengan filter, detail produk (varian dan harga dinamis), keranjang dengan kupon dan ongkir gratis, checkout tervalidasi,
+  konfirmasi dengan nomor pesanan, lacak pesanan, kontak dan FAQ. Company profile punya tentang, layanan dan detailnya, proyek/studi kasus, wawasan, karier, kontak, dan reservasi/janji temu.
+- **Semua simulasi:** keranjang, pesanan, reservasi, dan pesan disimpan di `localStorage` peramban; tidak ada pembayaran nyata. Merek, klien, harga, dan angka fiktif.
+  Untuk backend sungguhan, ganti isi objek `api` di `js/site/store.js` (bentuk argumen dan hasil sudah sama).
+- Konten panel adalah DOM biasa (bisa difokus, dibaca pembaca layar). Di desktop panel ada di kanan dan adegan digeser ke kiri; di ponsel panel menjadi lembar bawah dan bisa diciutkan.
+- Suara prosedural (Web Audio) berganti per tempat; aktif setelah klik pertama, tombol ♪ untuk mematikan.
 
 ## Menjalankan lokal
 
@@ -71,37 +47,41 @@ python3 -m http.server 8000
 Membuka `index.html` langsung dari `file://` tidak berfungsi karena memakai ES module dan `fetch`.
 Three.js dimuat dari CDN (jsDelivr, versi 0.163.0), jadi perlu koneksi internet.
 
-Parameter `?q=0|1|2` memaksa kualitas grafis (hemat, sedang, tinggi). Tanpa parameter, kualitas dipilih otomatis dan turun sendiri bila perangkat berat. Layar sempit dan layar sentuh mulai dari kualitas sedang.
+Parameter `?q=0|1|2` memaksa kualitas grafis (hemat, sedang, tinggi), `?instant=1` mematikan animasi terbang (untuk pengujian), `?bare=1` menyembunyikan UI. Tanpa parameter, kualitas dipilih otomatis dan turun sendiri bila perangkat berat. Layar sempit dan layar sentuh mulai dari kualitas sedang.
 
 ## Struktur
 
 ```
-index.html            beranda
-concepts/*.html       satu halaman 3D per konsep
-sites/*.html          situs compro / e-commerce per konsep
-css/site.css          gaya bersama, responsif dari 320px sampai desktop
+index.html            beranda (portal 3D)
+concepts/*.html       sembilan situs 3D
+sites/*.html          pengalihan dari alamat lama
+css/world.css         gaya situs 3D (panel, pin, bilah atas), responsif
+css/site.css          gaya beranda
 js/core.js            helper 3D, tekstur prosedural, HDRI, bahan
-js/engine.js          slide snap-scroll, HUD, kamera dari posisi scroll, post-processing
+js/world/world.js     mesin situs 3D: stasiun, terbang, lihat 360°, orbit produk, pin, router, pasca-proses
+js/world/kit.js       perabot bersama: rak, pajangan berputar, meja kasir, layar kanvas, gambar katalog dari model
+js/world/shop.js      panel e-commerce (katalog, produk, keranjang, checkout, pesanan, lacak, kontak)
+js/world/compro.js    panel company profile (tentang, layanan, proyek, wawasan, karier, reservasi)
+js/world/<id>.js      satu per situs: tempat, perabot, model produk, panel cerita
+js/concepts/*.js      adegan 3D tiap konsep (dipakai ulang oleh situs)
+js/sites/*.js         data tiap situs (teks, produk, harga, kupon, ongkir)
+js/site/store.js      keranjang, pesanan, api simulasi (localStorage)
+js/site/ui.js         utilitas DOM dan validasi formulir
+js/engine.js          slide snap-scroll untuk beranda
 js/audio.js           suara prosedural (Web Audio)
-js/study.js           studi kasus, titik panas, dan pemetaan audio per konsep
-js/registry.js        daftar konsep (menu, kartu, tautan antar-halaman)
-js/concepts/*.js      satu modul per konsep: adegan, slide, dan aksi tombol
-js/cover.js           adegan portal untuk beranda
-js/site/              kerangka situs: app (router), shop, compro, store, ui
-js/sites/*.js         data tiap situs (teks, produk, harga)
-css/shop.css          gaya situs
-tools/capture.js      tangkap gambar situs dari adegan 3D
+tools/capture.js      tangkap gambar tiap tempat (cadangan tanpa WebGL)
 assets/img/           gambar hasil tangkapan
 assets/hdri/          HDRI Poly Haven (CC0) untuk pencahayaan
-assets/models/        model glTF (Chandelier_03 di kamar SERENA)
-blender/              skrip Blender (bpy) untuk render dan ekspor aset; lihat blender/README.md
+assets/models/        model glTF (lampu gantung SERENA, mobil VOLT)
+blender/              skrip Blender (bpy) untuk aset; lihat blender/README.md
 ```
 
-## Menambah konsep
+## Menambah situs
 
-1. Salin salah satu `js/concepts/*.js`, ganti `build...` dan objek `concept` (slide, kamera, tombol).
-2. Tambahkan entri di `js/registry.js`.
-3. Salin salah satu `concepts/*.html` dan ganti nama modul yang diimpor.
+1. Buat adegan di `js/concepts/<id>.js` (fungsi build yang mengembalikan `scene`, `update`, `actions`).
+2. Tulis data di `js/sites/<id>.js` (merek, tema, produk atau layanan).
+3. Tulis `js/world/<id>.js`: daftar stasiun (posisi kamera, induk untuk jalur terbang), perabot dari `kit.js`, model produk, dan `route()` yang memetakan alamat ke tempat dan panel.
+4. Salin salah satu `concepts/*.html` dan ganti id-nya; tambahkan entri di `js/registry.js`.
 
 ## Lisensi dan atribusi
 

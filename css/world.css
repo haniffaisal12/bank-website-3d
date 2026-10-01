@@ -2,7 +2,7 @@
 :root{--wbg:#120c08;--wink:#f5ebdf;--wmut:#c2ab95;--wline:rgba(255,220,190,.16);--wglass:rgba(20,12,8,.62);--acc:#ff9a3a;--accInk:#2a1200;--fh:'Playfair Display',Georgia,serif;--fb:'Karla',system-ui,sans-serif;color-scheme:dark}
 *{box-sizing:border-box}html,body{height:100%;margin:0;overflow:hidden;background:var(--wbg);color:var(--wink);font:400 15px/1.55 var(--fb);-webkit-font-smoothing:antialiased}
 #gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}#gl.grab{cursor:grabbing}
-body.nogl{background:#120c08 url(../assets/img/kopi/04.jpg) center/cover}
+body.nogl{background-color:var(--wbg);background-position:center;background-size:cover}
 a{color:inherit}button{font:inherit;color:inherit}:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 .skip{position:fixed;left:-999px;top:8px;z-index:60;background:var(--acc);color:var(--accInk);padding:.5rem 1rem}.skip:focus{left:8px}
 #loader{position:fixed;inset:0;display:grid;place-items:center;background:var(--wbg);z-index:80;transition:opacity .6s}#loader.done{opacity:0;pointer-events:none}#loader p{font:500 .75rem var(--fb);letter-spacing:.2em;text-transform:uppercase;color:var(--wmut)}#loader i{display:block;width:140px;height:2px;margin:12px auto 0;background:linear-gradient(90deg,transparent,var(--acc),transparent);animation:ld 1.2s infinite}@keyframes ld{0%{transform:translateX(-60%)}100%{transform:translateX(60%)}}
@@ -88,3 +88,17 @@ table{width:100%;border-collapse:collapse;margin-bottom:.8rem}th,td{text-align:l
   #wloc{bottom:auto;top:62px;left:8px;padding:.3rem .35rem .3rem .8rem}#wlocH{display:none}
   .wgrid{grid-template-columns:1fr 1fr}.wusp{grid-template-columns:1fr}.wlogo{font-size:.95rem}
 }
+
+/* panel terang untuk tema terang (FLORA, SERENA) */
+.wlight .wbar{background:linear-gradient(180deg,rgba(255,255,255,.55),transparent)}.wlight .wnav a:hover,.wlight .wnav a.on{background:rgba(0,0,0,.06)}
+.wlight .fld input,.wlight .fld textarea,.wlight .fld select,.wlight .wcpn input{background:rgba(255,255,255,.7)}.wlight .th{background:radial-gradient(circle at 50% 42%,#fff,#e9e2d6 72%)}
+.wlight .wmini img{background:radial-gradient(circle at 50% 40%,#fff,#e9e2d6)}.wlight blockquote,.wlight .wusp li,.wlight .wpc{background:rgba(255,255,255,.5)}.wlight #sToast{background:#1d1a16;color:#fff}
+.wlight .wnav{background:transparent}@media (max-width:920px){.wlight .wnav{background:rgba(255,252,246,.96)}}
+/* company profile */
+.wlist{display:grid;gap:.45rem;margin:1rem 0}.wli2{display:flex;align-items:center;gap:.8rem;padding:.75rem .85rem;border:1px solid var(--wline);border-radius:12px;text-decoration:none;transition:border-color .2s,transform .2s}.wli2:hover{border-color:var(--acc);transform:translateX(3px)}
+.wli2 em{flex:none;font:600 .7rem var(--fb);letter-spacing:.1em;text-transform:uppercase;color:var(--acc);min-width:2.2rem}.wli2 span{flex:1;display:flex;flex-direction:column;min-width:0}.wli2 b{font:700 .98rem var(--fh)}.wli2 small{color:var(--wmut);font-size:.8rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.wli2 i{font-style:normal;color:var(--acc)}
+.wticks{list-style:none;padding:0;margin:.8rem 0}.wticks li{position:relative;padding-left:1.4rem;margin:.35rem 0;color:var(--wmut);font-size:.9rem}.wticks li::before{content:"";position:absolute;left:0;top:.5em;width:.75rem;height:.4rem;border-left:2px solid var(--acc);border-bottom:2px solid var(--acc);transform:rotate(-45deg) translateY(-30%)}
+.wteam{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}.wteam div{display:flex;flex-direction:column;align-items:center;text-align:center;padding:.7rem;border:1px solid var(--wline);border-radius:12px}.wteam span{display:grid;place-items:center;width:46px;height:46px;border-radius:50%;background:var(--acc);color:var(--accInk);font:700 .95rem var(--fh);margin-bottom:.4rem}.wteam b{font-size:.85rem}.wteam small{color:var(--wmut);font-size:.75rem}
+summary small{font-weight:400;color:var(--wmut);font-size:.78rem;margin-left:.4rem}
+/* mode tangkap gambar (?bare=1): hanya adegan */
+body.bare .wbar,body.bare #wp,body.bare #wloc,body.bare #wpins,body.bare #wtip,body.bare #sToast{display:none!important}

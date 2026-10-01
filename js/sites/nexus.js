@@ -1,4 +1,4 @@
-/* Data situs NEXUS·AI (fiktif). Template: js/site/compro.js */
+/* Data situs NEXUS·AI (fiktif). Dipakai oleh js/world/nexus.js (situs di dalam adegan 3D). */
 export default {
  id:'nexus',type:'compro',frames:7,
  fonts:'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap',

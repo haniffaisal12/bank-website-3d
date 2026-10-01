@@ -46,7 +46,7 @@ function buildGenom(ui){
   const helix=new T.Group();helix.add(back,rA,rB);helix.rotation.order='YXZ';helix.rotation.y=-1.0;helix.position.set(0,0,-6);scene.add(helix);back.frustumCulled=rA.frustumCulled=rB.frustumCulled=false;back.castShadow=true;
   const BC=[new T.Color(.15,.9,1.2),new T.Color(1.2,.2,.8),new T.Color(1.3,.85,.15),new T.Color(.55,1.2,.2)],pair=[1,0,3,2];   // A-T, C-G
   const bs=[];for(let i=0;i<N;i++)bs.push((rr()*4)|0);
-  const SVC=[[60,130,'Skrining Keturunan',0x5fe6ff],[140,210,'Nutrigenomik',0xffd23a],[230,300,'Onkogenetik',0xff5fc0]];
+  const SVC=[[60,130,'Skrining Kanker',0x5fe6ff],[140,210,'Farmakogenomik',0xffd23a],[230,300,'Genom Utuh',0xff5fc0]];
   let unzipF=-60,unzipT=false,scanP=-1,svc=-1,dirty=true,zipU=new Float32Array(N);
   const q=new T.Quaternion(),up=V(0,1,0),m4=new T.Matrix4(),pv=V(0,0,0),dv=V(0,0,0),sv=V(1,1,1),cc=new T.Color();
   const seg=[];SVC.forEach((s,k)=>{const tag=tagSprite(s[2],'#'+new T.Color(s[3]).getHexString(),1.5);tag.position.set(RH*3.4,1.2,Z0-((s[0]+s[1])/2)*DZ);tag.visible=false;helix.add(tag);seg.push(tag)});
