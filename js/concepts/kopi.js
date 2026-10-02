@@ -62,11 +62,22 @@ function buildKopi(ui){
   Box(4.8,4.6,.5,plasterM,-4.6,2.5,Dp/2,B);Box(4.8,4.6,.5,plasterM,4.6,2.5,Dp/2,B);Box(4.4,1.2,.5,plasterM,0,4.2,Dp/2,B);
   [-1,1].forEach(s=>{Box(.3,3.4,.3,timber,s*2.15,2.2,Dp/2+.1,B)});Box(4.8,.3,.3,timber,0,3.85,Dp/2+.1,B);
   [-1,1].forEach(s=>{const wg=Box(.06,1.6,2.2,new T.MeshPhysicalMaterial({color:0xcfe0ff,transparent:true,opacity:.14,roughness:.03,clearcoat:1,depthWrite:false}),s*W/2,2.6,0,B);wg.castShadow=false;Box(.2,1.8,.14,timber,s*W/2,2.6,1.15,B);Box(.2,1.8,.14,timber,s*W/2,2.6,-1.15,B)});
-  [-1,1].forEach(s=>{const r=Box(W+2,.18,Dp/2+1.6,tin,0,5.9,s*(Dp/4+.2),B);r.rotation.x=-s*.42;r.position.y=5.55+Math.abs(s)*.0});
+  // atap pelana: bubungan di tengah (z = 0), tepi turun ke depan/belakang dan berada di atas dinding serta balok papan nama
+  const RA=.42,RC=7.1,RZc=Dp/4+.2,rY=z=>RC+(RZc-Math.abs(z))*Math.tan(RA)-.1;   // rY: sisi bawah atap pada jarak z
+  [-1,1].forEach(s=>{const r=Box(W+2,.18,Dp/2+1.6,tin,0,RC,s*RZc,B);r.rotation.x=s*RA});
+  // dinding segitiga di kedua ujung pelana dan pengisi di atas dinding depan/belakang sampai sisi bawah atap
+  const ze=Dp/2+.25,gs=new T.Shape([[-ze,4.8],[ze,4.8],[ze,rY(ze)],[0,rY(0)],[-ze,rY(ze)]].map(p=>new T.Vector2(p[0],p[1])));
+  // UV disamakan dengan dinding bata di bawahnya (dinding samping: lebar Dp, tinggi 4.6 dari y = .2) agar ukuran bata tidak melompat
+  const gg=new T.ExtrudeGeometry(gs,{depth:.5,bevelEnabled:false}),gp=gg.attributes.position,gu=gg.attributes.uv;
+  for(let i=0;i<gp.count;i++)gu.setXY(i,(gp.getX(i)+Dp/2)/Dp,(gp.getY(i)-.2)/4.6);
+  const sh=rY(Dp/2)-4.8+.05;
+  [-1,1].forEach(s=>{const g=mesh(gg,plasterM,s*W/2-.25,0,0,B);g.rotation.y=Math.PI/2;
+    const k=Box(W,sh,.5,plasterM,0,4.8+sh/2-.025,s*Dp/2,B),ku=k.geometry.attributes.uv;for(let i=0;i<ku.count;i++)ku.setY(i,ku.getY(i)*sh/4.6)});
   Box(W+.6,.5,.5,timber,0,4.95,Dp/2+.3,B);
   const sgc=canvas(1024,200),sg=sgc.getContext('2d');sg.fillStyle='#1b100b';sg.fillRect(0,0,1024,200);sg.strokeStyle='#e8a050';sg.lineWidth=6;sg.strokeRect(10,10,1004,180);sg.fillStyle='#f4c27a';sg.font='800 100px serif';sg.textAlign='center';sg.textBaseline='middle';sg.fillText('KAWAH KOPI',512,104);
   mesh(new T.PlaneGeometry(4.6,.9),stdM(0xffffff,{map:ctex(sgc),roughness:.6,emissive:0xffffff,emissiveMap:ctex(sgc),emissiveIntensity:.18}),0,4.35,Dp/2+.3,B);
-  const ch=Cyl(.35,.35,4,tin,-3.6,7.6,-2,B,16);Cyl(.5,.35,.4,tin,-3.6,9.6,-2,B,16);
+  // cerobong tepat di atas pipa buang mesin sangrai (RX, RZ-.3; puncak pipa y = 6.2) dan menembus atap
+  const ch=Cyl(.35,.35,3.9,tin,-3.4,8.15,-3.7,B,16);Cyl(.5,.35,.4,tin,-3.4,10.3,-3.7,B,16);
   // lampu dalam
   const il=new T.PointLight(0xffb870,70,16,2);il.position.set(0,4.2,-1);B.add(il);const il2=new T.PointLight(0xffa860,40,12,2);il2.position.set(-3.5,2.4,-1.5);B.add(il2);
   [-3,0,3].forEach(x=>{const lm=new T.MeshStandardMaterial({color:0x331a08,emissive:0xffb060,emissiveIntensity:2.4,roughness:.7});mesh(new T.LatheGeometry([[.02,-.2],[.2,-.12],[.28,.1],[.1,.26]].map(q=>new T.Vector2(q[0],q[1])),20),lm,x,4.1,1,B).castShadow=false;Cyl(.008,.008,.8,timber,x,4.6,1,B,4);glow(0xffb870,2.2,x,4.0,1,B,.6)});
